@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Docker Volume Lab - Vanilla JS Version</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      @keyframes bounce-slow {
+        0%,
+        100% {
+          transform: translateY(-5%);
+        }
+        50% {
+          transform: translateY(0);
+        }
+      }
+      .animate-bounce-custom {
+        animation: bounce-slow 2s infinite;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .log-entry {
+        animation: fadeIn 0.3s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-4 md:p-8">
+    <header class="max-w-6xl mx-auto mb-8 text-center">
+      <h1
+        class="text-3xl md:text-4xl font-bold mb-2 flex items-center justify-center gap-3"
+      >
+        <i class="fas fa-microchip text-blue-400"></i> Docker Volume Lab
+      </h1>
+      <p class="text-slate-400 italic">
+        Mô phỏng sự bền vững của dữ liệu khi Container bị xóa (Phiên bản
+        HTML/JS)
+      </p>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Cột trái: Các bước vận hành -->
+      <div class="lg:col-span-4 space-y-4">
+        <h2
+          class="text-lg font-bold text-slate-300 px-2 uppercase tracking-tighter"
+        >
+          Quy trình vận hành
+        </h2>
+
+        <div
+          id="step-0"
+          class="step-card p-4 rounded-xl border-2 border-blue-500 bg-slate-700/50 shadow-lg transition-all duration-300 flex items-start gap-4"
+        >
+          <i class="fas fa-file-code text-2xl text-blue-500 mt-1"></i>
+          <div>
+            <h3 class="font-bold text-sm">1. Code & Dockerfile</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Chứa mã nguồn và chỉ dẫn build.
+            </p>
+          </div>
+        </div>
+
+        <div
+          id="step-1"
+          class="step-card p-4 rounded-xl border-2 border-slate-700 opacity-40 transition-all duration-300 flex items-start gap-4"
+        >
+          <i class="fas fa-layer-group text-2xl text-purple-500 mt-1"></i>
+          <div>
+            <h3 class="font-bold text-sm">2. Docker Image</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Bản đóng gói tĩnh, không đổi (Read-only).
+            </p>
+          </div>
+        </div>
+
+        <div
+          id="step-2"
+          class="step-card p-4 rounded-xl border-2 border-slate-700 opacity-40 transition-all duration-300 flex items-start gap-4"
+        >
+          <i class="fas fa-sliders-h text-2xl text-orange-500 mt-1"></i>
+          <div>
+            <h3 class="font-bold text-sm">3. Docker Compose</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Định nghĩa cách gắn Volume vào Container.
+            </p>
+          </div>
+        </div>
+
+        <div
+          id="step-3"
+          class="step-card p-4 rounded-xl border-2 border-slate-700 opacity-40 transition-all duration-300 flex items-start gap-4"
+        >
+          <i class="fas fa-box text-2xl text-green-500 mt-1"></i>
+          <div>
+            <h3 class="font-bold text-sm">4. Container (Runtime)</h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Tiến trình đang chạy. Có thể bị xóa bất cứ lúc nào.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onclick="resetAll()"
+          class="w-full py-2 border border-slate-700 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-all text-sm flex items-center justify-center gap-2"
+        >
+          <i class="fas fa-sync-alt"></i> Reset môi trường
+        </button>
+      </div>
+
+      <!-- Cột giữa: Visualizer Tương tác -->
+      <div class="lg:col-span-5 space-y-6">
+        <div
+          class="bg-slate-800 p-6 rounded-2xl border border-slate-700 relative h-[450px] flex flex-col items-center"
+        >
+          <!-- Các nút hành động -->
+          <div
+            id="action-buttons"
+            class="absolute top-4 left-4 right-4 flex justify-center gap-2 z-10"
+          >
+            <button
+              id="btn-build"
+              onclick="buildImage()"
+              class="px-4 py-2 bg-blue-600 rounded-lg font-bold text-sm hover:bg-blue-500 flex items-center gap-2"
+            >
+              <i class="fas fa-layer-group"></i> Docker Build
+            </button>
+            <button
+              id="btn-config"
+              onclick="configCompose()"
+              class="hidden px-4 py-2 bg-orange-600 rounded-lg font-bold text-sm hover:bg-orange-500 flex items-center gap-2"
+            >
+              <i class="fas fa-sliders-h"></i> Config Compose
+            </button>
+            <button
+              id="btn-up"
+              onclick="startContainer()"
+              class="hidden px-4 py-2 bg-green-600 rounded-lg font-bold text-sm hover:bg-green-500 flex items-center gap-2"
+            >
+              <i class="fas fa-play"></i> Docker Compose Up
+            </button>
+            <div id="running-actions" class="hidden flex gap-2">
+              <button
+                onclick="generateData()"
+                class="px-4 py-2 bg-blue-600 rounded-lg font-bold text-sm hover:bg-blue-500 flex items-center gap-2"
+              >
+                <i class="fas fa-plus"></i> Ghi dữ liệu
+              </button>
+              <button
+                onclick="deleteContainer()"
+                class="px-4 py-2 bg-red-600 rounded-lg font-bold text-sm hover:bg-red-500 flex items-center gap-2"
+              >
+                <i class="fas fa-trash-alt"></i> Xóa Container
+              </button>
+            </div>
+          </div>
+
+          <!-- Kiến trúc Visual -->
+          <div class="mt-16 flex flex-col items-center w-full">
+            <i
+              id="globe-icon"
+              class="fas fa-globe text-3xl mb-2 transition-colors text-slate-700"
+            ></i>
+
+            <!-- Container Box -->
+            <div
+              id="container-box"
+              class="w-48 h-32 rounded-2xl border-4 border-slate-800 bg-black/20 opacity-20 flex flex-col items-center justify-center transition-all duration-500 relative"
+            >
+              <i id="box-icon" class="fas fa-box text-3xl text-slate-600"></i>
+              <span class="text-[10px] font-black mt-1">CONTAINER</span>
+              <div
+                id="running-badge"
+                class="hidden absolute -top-2 -right-2 bg-green-500 text-[8px] px-1 rounded animate-bounce"
+              >
+                RUNNING
+              </div>
+            </div>
+
+            <!-- Volume Linkage -->
+            <div class="relative flex flex-col items-center w-full">
+              <div
+                id="volume-line"
+                class="h-12 w-1 border-r-2 border-dashed border-slate-700 transition-colors"
+              ></div>
+
+              <!-- Volume Storage -->
+              <div
+                id="volume-storage"
+                class="w-64 p-4 rounded-xl border-2 border-slate-700 transition-all duration-500 bg-slate-900/80"
+              >
+                <div class="flex justify-between items-center mb-2">
+                  <div class="flex items-center gap-2">
+                    <i id="drive-icon" class="fas fa-hdd text-slate-600"></i>
+                    <span
+                      id="volume-label"
+                      class="text-xs font-bold text-slate-500"
+                      >VOLUME: openclaw_data</span
+                    >
+                  </div>
+                  <span
+                    id="writing-badge"
+                    class="hidden text-[8px] bg-red-600 px-1 rounded animate-ping text-white uppercase"
+                    >Writing...</span
+                  >
+                </div>
+
+                <div
+                  id="data-list"
+                  class="bg-black/40 rounded p-2 h-24 overflow-y-auto grid grid-cols-2 gap-1 scrollbar-hide"
+                >
+                  <span
+                    id="empty-msg"
+                    class="col-span-2 text-[10px] text-slate-600 italic text-center mt-4"
+                    >Trống (Đợi Container ghi dữ liệu)</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs Terminal -->
+        <div
+          class="bg-black p-4 rounded-xl border border-slate-700 font-mono text-xs h-40 overflow-hidden"
+        >
+          <div
+            class="flex items-center gap-2 mb-2 text-slate-500 border-b border-slate-800 pb-2"
+          >
+            <i class="fas fa-terminal"></i> <span>System Output</span>
+          </div>
+          <div
+            id="terminal-logs"
+            class="space-y-1 overflow-y-auto h-28 scrollbar-hide"
+          >
+            <span class="text-slate-700 italic">Waiting for commands...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cột phải: Giải thích chi tiết -->
+      <div class="lg:col-span-3 space-y-4">
+        <div class="bg-slate-800/80 p-5 rounded-xl border border-slate-700">
+          <h3
+            class="text-sm font-bold mb-3 flex items-center gap-2 text-orange-400"
+          >
+            <i class="fas fa-database"></i> Giải thích Volume
+          </h3>
+          <ul class="text-xs space-y-4 text-slate-300">
+            <li class="bg-slate-900/50 p-2 rounded">
+              <strong>1. Ánh xạ (Mapping):</strong> Docker Compose nối thư mục
+              <code class="text-orange-300">/data/openclaw</code> với Volume
+              <code class="text-red-300">openclaw_data</code>.
+            </li>
+            <li class="bg-slate-900/50 p-2 rounded">
+              <strong>2. Tính độc lập:</strong> Khi bạn nhấn
+              <span class="text-red-400 font-bold uppercase">Xóa Container</span
+              >, lớp Container mất nhưng Volume còn nguyên.
+            </li>
+            <li class="bg-slate-900/50 p-2 rounded">
+              <strong>3. Khôi phục:</strong> Khi chạy lại, Container mới sẽ tự
+              tìm đến Volume cũ để lấy lại file JSON.
+            </li>
+          </ul>
+        </div>
+
+        <div class="p-4 bg-blue-900/20 rounded-xl border border-blue-800/50">
+          <h4 class="text-xs font-bold text-blue-400 mb-2 uppercase italic">
+            Bài tập thử nghiệm:
+          </h4>
+          <p class="text-[11px] text-blue-200 leading-relaxed">
+            1. Build và Up Container.<br />
+            2. Nhấn "Ghi dữ liệu" vài lần.<br />
+            3. Nhấn "Xóa Container".<br />
+            4. Nhấn "Up" lại và xem dữ liệu còn không!
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      // State Management
+      let currentStep = 0;
+      let isRunning = false;
+      let dataStored = [];
+
+      // UI Elements
+      const terminalLogs = document.getElementById("terminal-logs");
+      const dataList = document.getElementById("data-list");
+      const containerBox = document.getElementById("container-box");
+      const volumeLine = document.getElementById("volume-line");
+      const volumeStorage = document.getElementById("volume-storage");
+      const globeIcon = document.getElementById("globe-icon");
+      const boxIcon = document.getElementById("box-icon");
+      const driveIcon = document.getElementById("drive-icon");
+      const volumeLabel = document.getElementById("volume-label");
+
+      // Buttons
+      const btnBuild = document.getElementById("btn-build");
+      const btnConfig = document.getElementById("btn-config");
+      const btnUp = document.getElementById("btn-up");
+      const runningActions = document.getElementById("running-actions");
+
+      function addLog(msg, type = "success") {
+        if (terminalLogs.innerHTML.includes("Waiting"))
+          terminalLogs.innerHTML = "";
+
+        const time = new Date().toLocaleTimeString([], { hour12: false });
+        const logDiv = document.createElement("div");
+        logDiv.className = "log-entry";
+
+        let color = "text-green-400";
+        if (type === "warn") color = "text-yellow-400";
+        if (type === "info") color = "text-blue-400";
+
+        logDiv.innerHTML = `<span class="opacity-50 mr-2">$</span> <span class="${color}">${msg}</span>`;
+        terminalLogs.prepend(logDiv);
+      }
+
+      function updateStepUI(stepIdx) {
+        document.querySelectorAll(".step-card").forEach((card, i) => {
+          if (i === stepIdx) {
+            card.classList.remove("border-slate-700", "opacity-40");
+            card.classList.add(
+              "border-blue-500",
+              "bg-slate-700/50",
+              "shadow-lg",
+            );
+          } else {
+            card.classList.remove(
+              "border-blue-500",
+              "bg-slate-700/50",
+              "shadow-lg",
+            );
+            card.classList.add("border-slate-700", "opacity-40");
+          }
+        });
+      }
+
+      function buildImage() {
+        addLog("Đang gửi context tới Docker Daemon...");
+        setTimeout(() => {
+          addLog("Build thành công Image: openclaw-headless:v1");
+          currentStep = 1;
+          updateStepUI(1);
+          btnBuild.classList.add("hidden");
+          btnConfig.classList.remove("hidden");
+        }, 800);
+      }
+
+      function configCompose() {
+        addLog("Đã nạp file docker-compose.yml và .env.headless");
+        currentStep = 2;
+        updateStepUI(2);
+        btnConfig.classList.add("hidden");
+        btnUp.classList.remove("hidden");
+      }
+
+      function startContainer() {
+        addLog("Docker Compose: Đang mount volume 'openclaw_data'...", "info");
+        addLog("Container 'openclaw-headless' đang khởi động...");
+
+        isRunning = true;
+        currentStep = 3;
+        updateStepUI(3);
+
+        btnUp.classList.add("hidden");
+        runningActions.classList.remove("hidden");
+
+        // UI States
+        containerBox.classList.remove(
+          "border-slate-800",
+          "bg-black/20",
+          "opacity-20",
+        );
+        containerBox.classList.add("border-green-500", "bg-green-500/10");
+        boxIcon.classList.replace("text-slate-600", "text-green-400");
+        boxIcon.classList.add("animate-bounce-custom");
+        document.getElementById("running-badge").classList.remove("hidden");
+
+        volumeLine.classList.replace("border-slate-700", "border-orange-500");
+        globeIcon.classList.replace("text-slate-700", "text-blue-400");
+        globeIcon.classList.add("animate-pulse");
+
+        if (dataStored.length > 0) {
+          addLog("ℹ️ Container đã nhận diện dữ liệu cũ trong Volume!");
+        }
+      }
+
+      function generateData() {
+        const fileName = `config_${Math.floor(Math.random() * 900) + 100}.json`;
+        dataStored.push(fileName);
+
+        addLog(`Container: Đã ghi file ${fileName} vào /data/openclaw`);
+
+        // Update Volume UI
+        const emptyMsg = document.getElementById("empty-msg");
+        if (emptyMsg) emptyMsg.remove();
+
+        const item = document.createElement("div");
+        item.className =
+          "text-[9px] text-red-200 bg-red-900/40 border border-red-800/50 p-1 rounded flex items-center gap-1 log-entry";
+        item.innerHTML = `<i class="fas fa-database text-[8px]"></i> ${fileName}`;
+        dataList.prepend(item);
+
+        // Flash writing badge
+        const badge = document.getElementById("writing-badge");
+        badge.classList.remove("hidden");
+
+        // Highlight volume
+        volumeStorage.classList.replace("border-slate-700", "border-red-500");
+        volumeStorage.classList.add("shadow-lg", "shadow-red-900/20");
+        driveIcon.classList.replace("text-slate-600", "text-red-400");
+        volumeLabel.classList.replace("text-slate-500", "text-red-400");
+
+        setTimeout(() => badge.classList.add("hidden"), 1000);
+      }
+
+      function deleteContainer() {
+        isRunning = false;
+        addLog("⚠️ Đã xóa Container! Toàn bộ dữ liệu RAM bị mất.", "warn");
+        addLog(
+          "ℹ️ Volume 'openclaw_data' vẫn tồn tại trên ổ cứng máy thật.",
+          "info",
+        );
+
+        currentStep = 2;
+        updateStepUI(2);
+
+        runningActions.classList.add("hidden");
+        btnUp.classList.remove("hidden");
+
+        // UI Reset
+        containerBox.classList.add(
+          "border-slate-800",
+          "bg-black/20",
+          "opacity-20",
+        );
+        containerBox.classList.remove("border-green-500", "bg-green-500/10");
+        boxIcon.classList.replace("text-green-400", "text-slate-600");
+        boxIcon.classList.remove("animate-bounce-custom");
+        document.getElementById("running-badge").classList.add("hidden");
+
+        volumeLine.classList.replace("border-orange-500", "border-slate-700");
+        globeIcon.classList.replace("text-blue-400", "text-slate-700");
+        globeIcon.classList.remove("animate-pulse");
+      }
+
+      function resetAll() {
+        currentStep = 0;
+        isRunning = false;
+        dataStored = [];
+
+        updateStepUI(0);
+        terminalLogs.innerHTML =
+          '<span class="text-slate-700 italic">Waiting for commands...</span>';
+        dataList.innerHTML =
+          '<span id="empty-msg" class="col-span-2 text-[10px] text-slate-600 italic text-center mt-4">Trống (Đợi Container ghi dữ liệu)</span>';
+
+        btnBuild.classList.remove("hidden");
+        btnConfig.classList.add("hidden");
+        btnUp.classList.add("hidden");
+        runningActions.classList.add("hidden");
+
+        // Reset Visuals
+        deleteContainer();
+        volumeStorage.classList.replace("border-red-500", "border-slate-700");
+        volumeStorage.classList.remove("shadow-lg", "shadow-red-900/20");
+        driveIcon.classList.replace("text-red-400", "text-slate-600");
+        volumeLabel.classList.replace("text-red-400", "text-slate-500");
+      }
+    </script>
+  </body>
+</html>

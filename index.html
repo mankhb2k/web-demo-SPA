@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Web Demo SPA</title>
+    <meta
+      name="description"
+      content="Mẫu trang tĩnh để deploy lên GitHub Pages"
+    />
+    <style>
+      :root {
+        --bg: #0f1724;
+        --card: #111827;
+        --accent: #06b6d4;
+        --muted: #9ca3af;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family:
+          Inter,
+          Segoe UI,
+          system-ui,
+          Arial;
+      }
+      body {
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #071023 0%, #0b1220 100%);
+        color: #e6eef8;
+      }
+      .card {
+        max-width: 760px;
+        padding: 32px;
+        border-radius: 12px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(255, 255, 255, 0.01)
+        );
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
+      }
+      h1 {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+      }
+      p {
+        margin: 0 0 16px 0;
+        color: var(--muted);
+      }
+      .actions a {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #072033;
+        background: var(--accent);
+        font-weight: 600;
+      }
+      footer {
+        margin-top: 18px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      pre {
+        background: #071627;
+        padding: 12px;
+        border-radius: 8px;
+        color: #a6f0ff;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" role="main">
+      <h1>Web Demo SPA</h1>
+      <p>Mẫu trang tĩnh đơn giản đã sẵn sàng để deploy lên GitHub Pages.</p>
+
+      <section>
+        <p>
+          Thay nội dung trong file <strong>index.html</strong> bằng ứng dụng của
+          bạn (HTML, CSS, JS). Nếu bạn dùng một SPA framework, build ra thư mục
+          tĩnh rồi đặt file đầu ra tại đây.
+        </p>
+      </section>
+
+      <div class="actions" style="margin-top: 12px">
+        <a href="README.md">Xem README</a>
+        <a
+          href="docker.html"
+          style="margin-left: 12px; background: #0ea5a4; color: #fff"
+          >Xem Docker</a
+        >
+      </div>
+
+      <footer>
+        <div>Quick deploy commands:</div>
+        <pre>
+git add index.html
+git commit -m "Add index.html for GitHub Pages"
+git push origin main</pre
+        >
+      </footer>
+    </main>
+  </body>
+</html>
