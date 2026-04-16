@@ -1,0 +1,109 @@
+/**
+ * shared.js — Lit CSS shared across all tab components.
+ *
+ * Usage in any LitElement:
+ *   import { sharedStyles } from '../styles/shared.js';
+ *   static styles = [sharedStyles, css`...component-specific...`];
+ *
+ * NOTE: @keyframes must be re-declared inside shadow DOM to work.
+ */
+import { css } from 'https://esm.sh/lit@3';
+
+export const sharedStyles = css`
+  /* ── Keyframes (must live inside shadow DOM) ── */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  @keyframes ping  { 75%,100%{transform:scale(2.2);opacity:0} }
+  @keyframes slide { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  .anim-pulse { animation: pulse 2s cubic-bezier(.4,0,.6,1) infinite; }
+  .anim-ping  { animation: ping  1.2s ease-out infinite; }
+  .anim-slide { animation: slide .28s ease both; }
+
+  /* ── Typography ── */
+  .mono { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; }
+
+  /* ── Section heading ── */
+  .section-title {
+    font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: .5rem; color: #f1f5f9;
+  }
+
+  /* ── Panel (card container) ── */
+  .panel {
+    background: #0f1f38; border: 1px solid #1a2d46;
+    border-radius: 12px; padding: 1rem;
+  }
+  .panel-title {
+    font-size: .65rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: .1em; color: #475569; margin-bottom: .75rem;
+    display: flex; align-items: center; gap: .4rem;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    width: 100%; padding: .65rem; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, #1d4ed8, #6366f1);
+    color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
+    transition: all .15s; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+  }
+  .btn-primary:hover  { filter: brightness(1.15); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); filter: brightness(.95); }
+
+  .btn-ghost {
+    padding: .35rem .7rem; border-radius: 7px;
+    border: 1px solid #1a2d46; background: transparent; color: #60a5fa;
+    font-size: .72rem; font-weight: 700; cursor: pointer; transition: all .15s;
+    font-family: inherit; display: flex; align-items: center; gap: .35rem;
+  }
+  .btn-ghost:hover { background: #1a2d46; }
+
+  .btn-danger {
+    padding: .3rem .55rem; border-radius: 6px; border: none;
+    background: transparent; color: #4b5563; cursor: pointer;
+    transition: all .15s; font-size: .75rem; font-family: inherit;
+  }
+  .btn-danger:hover { background: #451a1a; color: #f87171; }
+
+  /* ── Info cards (used in storage + compare) ── */
+  .info-card {
+    background: #0f1f38; border: 1px solid #1a2d46; border-radius: 10px; padding: .85rem;
+    display: flex; gap: .65rem; align-items: flex-start; margin-bottom: .6rem;
+  }
+  .info-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+  .info-body { font-size: .78rem; line-height: 1.6; color: #94a3b8; }
+  .info-body strong { color: #e2e8f0; }
+  .info-blue  { border-color: #1d4ed8; background: #0c1d40; }
+  .info-amber { border-color: #d97706; background: #1c1200; }
+  .info-green { border-color: #16a34a; background: #052e16; }
+
+  /* ── Pro/con list (compare tab) ── */
+  .pro-con { font-size: .75rem; line-height: 1.7; }
+  .pro  { color: #4ade80; } .pro::before { content: '✓ '; }
+  .con  { color: #f87171; } .con::before { content: '✕ '; }
+  .neu  { color: #94a3b8; } .neu::before { content: '◉ '; }
+
+  /* ── File tree (storage tab) ── */
+  .tree        { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: .78rem; line-height: 2; }
+  .tree-root   { color: #64748b; }
+  .tree-dir    { color: #60a5fa; }
+  .tree-file   { color: #94a3b8; }
+  .tree-tag    { color: #374151; font-size: .65rem; }
+  .tree-indent { padding-left: 1.2rem; }
+
+  /* ── Flow visual (architecture + docker101) ── */
+  .flow-visual {
+    display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+    background: #060d1a; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+  }
+  .flow-box {
+    padding: .5rem .9rem; border-radius: 8px; font-size: .78rem; font-weight: 700;
+    text-align: center; flex-shrink: 0;
+  }
+  .flow-arrow { color: #1e3a5f; font-size: 1.2rem; flex-shrink: 0; }
+  .fb-file { background: #1c1200; border: 1px solid #d97706; color: #fcd34d; }
+  .fb-cmd  { background: #0c1d40; border: 1px solid #1d4ed8; color: #93c5fd;
+             font-family: 'Cascadia Code','Fira Code',monospace; font-size: .7rem; }
+  .fb-img  { background: #1e1040; border: 1px solid #7c3aed; color: #c4b5fd; }
+  .fb-ctr  { background: #052e16; border: 1px solid #16a34a; color: #4ade80; }
+`;

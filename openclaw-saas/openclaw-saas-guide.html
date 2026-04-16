@@ -1,0 +1,1204 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenClaw SaaS — Hướng dẫn Docker Tương tác</title>
+    <style>
+      /* ── Reset & Base ── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      body {
+        background: #070e1a;
+        color: #e2e8f0;
+        font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #1e3050; border-radius: 99px; }
+
+      /* ── Animations ── */
+      @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.35} }
+      @keyframes ping   { 75%,100%{transform:scale(2.2);opacity:0} }
+      @keyframes slide  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes flow   { 0%{stroke-dashoffset:24} 100%{stroke-dashoffset:0} }
+      @keyframes blink  { 0%,100%{opacity:1} 50%{opacity:0} }
+
+      .anim-pulse  { animation: pulse  2s  cubic-bezier(.4,0,.6,1) infinite; }
+      .anim-ping   { animation: ping   1.2s ease-out infinite; }
+      .anim-slide  { animation: slide  .28s ease both; }
+      .anim-blink  { animation: blink  1s  step-end infinite; }
+
+      /* ── Typography helpers ── */
+      .mono { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; }
+    </style>
+  </head>
+  <body>
+    <app-shell></app-shell>
+
+    <script type="module">
+      import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
+
+      /* ══════════════════════════════════════════════════════════
+         Helpers
+      ══════════════════════════════════════════════════════════ */
+      const uid  = () => Math.random().toString(36).slice(2, 6);
+      const now  = () => new Date().toLocaleTimeString('vi-VN');
+      const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+      const PLATFORMS = ['Telegram', 'Zalo', 'WhatsApp', 'Discord', 'Slack', 'IRC', 'LINE'];
+      const PLATFORM_EMOJI = {
+        Telegram:'✈', Zalo:'💬', WhatsApp:'📱', Discord:'🎮',
+        Slack:'🔷', IRC:'🖥', LINE:'💚',
+      };
+
+      const TABS = [
+        { id:'dashboard',    label:'Bảng điều khiển' },
+        { id:'architecture', label:'Kiến trúc SaaS'  },
+        { id:'storage',      label:'Lưu trữ'         },
+        { id:'compare',      label:'So sánh'         },
+        { id:'docker101',    label:'Docker 101'      },
+      ];
+
+      /* ══════════════════════════════════════════════════════════
+         AppShell — main component
+      ══════════════════════════════════════════════════════════ */
+      class AppShell extends LitElement {
+        static properties = {
+          _users:   { state: true },
+          _logs:    { state: true },
+          _tab:     { state: true },
+          _cmdUser: { state: true }, /* userId shown in docker-run panel */
+        };
+
+        static styles = css`
+          :host { display: block; }
+
+          /* ── Layout ── */
+          .app    { min-height: 100vh; display: flex; flex-direction: column; }
+          .header { background: #0b1628; border-bottom: 1px solid #1a2d46;
+                    padding: .75rem 1.5rem; display: flex; align-items: center;
+                    gap: 1rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 10; }
+          .header-logo { display: flex; align-items: center; gap: .6rem; }
+          .header-logo svg { flex-shrink: 0; }
+          .logo-text { font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em;
+                       background: linear-gradient(135deg, #38bdf8, #818cf8);
+                       -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+          .logo-sub  { font-size: .7rem; color: #475569; margin-top: -.1rem; }
+
+          .tabs { display: flex; gap: .25rem; flex-wrap: wrap; margin-left: auto; }
+          .tab-btn {
+            padding: .4rem .85rem; border-radius: 8px; border: none;
+            background: transparent; color: #64748b; cursor: pointer;
+            font-size: .8rem; font-weight: 600; transition: all .15s;
+            font-family: inherit;
+          }
+          .tab-btn:hover  { background: #1a2d46; color: #94a3b8; }
+          .tab-btn.active { background: #1d3a6e; color: #7dd3fc; }
+
+          .body { display: grid; grid-template-columns: 280px 1fr; flex: 1; }
+          @media (max-width: 840px) { .body { grid-template-columns: 1fr; } }
+
+          /* ── Sidebar ── */
+          .sidebar {
+            background: #0b1628; border-right: 1px solid #1a2d46;
+            padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem;
+          }
+          .panel {
+            background: #0f1f38; border: 1px solid #1a2d46;
+            border-radius: 12px; padding: 1rem;
+          }
+          .panel-title {
+            font-size: .65rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .1em; color: #475569; margin-bottom: .75rem;
+            display: flex; align-items: center; gap: .4rem;
+          }
+
+          /* Resource bars */
+          .stat-row   { display: flex; justify-content: space-between; font-size: .75rem; margin-bottom: .3rem; }
+          .bar-track  { background: #0c1a2e; border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: .75rem; }
+          .bar-fill   { height: 100%; border-radius: 99px; transition: width .6s ease; }
+          .bar-blue   { background: linear-gradient(90deg, #2563eb, #38bdf8); }
+          .bar-green  { background: linear-gradient(90deg, #16a34a, #4ade80); }
+          .bar-red    { background: linear-gradient(90deg, #dc2626, #f87171); }
+
+          .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .75rem; }
+          .metric  { background: #0c1a2e; border-radius: 8px; padding: .5rem .6rem; border: 1px solid #1a2d46; }
+          .metric-val  { font-size: 1.2rem; font-weight: 800; line-height: 1; }
+          .metric-name { font-size: .6rem; color: #475569; text-transform: uppercase; margin-top: .2rem; }
+
+          /* Add user button */
+          .btn-primary {
+            width: 100%; padding: .65rem; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, #1d4ed8, #6366f1);
+            color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
+            transition: all .15s; font-family: inherit;
+            display: flex; align-items: center; justify-content: center; gap: .4rem;
+          }
+          .btn-primary:hover  { filter: brightness(1.15); transform: translateY(-1px); }
+          .btn-primary:active { transform: translateY(0); filter: brightness(.95); }
+
+          /* Log panel */
+          .log-box {
+            background: #060d1a; border-radius: 8px; padding: .6rem;
+            height: 140px; overflow-y: auto; display: flex; flex-direction: column; gap: .25rem;
+          }
+          .log-entry { font-size: .68rem; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; color: #475569; }
+          .log-entry.fresh { color: #60a5fa; }
+          .log-time { opacity: .4; margin-right: .4rem; }
+
+          /* ── Main area ── */
+          .main  { padding: 1.25rem; overflow-y: auto; }
+          .section-title {
+            font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem;
+            display: flex; align-items: center; gap: .5rem; color: #f1f5f9;
+          }
+
+          /* ── Dashboard tab ── */
+          .empty-state {
+            border: 2px dashed #1a2d46; border-radius: 16px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 3rem 1rem; gap: .5rem;
+            color: #334155; text-align: center;
+          }
+          .empty-icon { font-size: 3rem; opacity: .35; }
+
+          .user-card {
+            background: #0f1f38; border: 1px solid #1a2d46;
+            border-radius: 14px; margin-bottom: 1.25rem; overflow: hidden;
+            transition: border-color .2s;
+          }
+          .user-card:hover { border-color: #2d4f8a; }
+          .user-head {
+            padding: .85rem 1rem; display: flex; align-items: center;
+            gap: .75rem; border-bottom: 1px solid #1a2d46;
+          }
+          .user-avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, #1e3a8a, #4f46e5);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .8rem; font-weight: 800; flex-shrink: 0;
+          }
+          .user-id   { font-size: .85rem; font-weight: 700; font-family: 'Cascadia Code','Fira Code',monospace; }
+          .user-meta { font-size: .68rem; color: #475569; }
+          .btn-ghost {
+            margin-left: auto; padding: .35rem .7rem; border-radius: 7px;
+            border: 1px solid #1a2d46; background: transparent; color: #60a5fa;
+            font-size: .72rem; font-weight: 700; cursor: pointer; transition: all .15s;
+            font-family: inherit; display: flex; align-items: center; gap: .35rem;
+          }
+          .btn-ghost:hover { background: #1a2d46; }
+          .btn-danger {
+            padding: .3rem .55rem; border-radius: 6px; border: none;
+            background: transparent; color: #4b5563; cursor: pointer;
+            transition: all .15s; font-size: .75rem; font-family: inherit;
+          }
+          .btn-danger:hover { background: #451a1a; color: #f87171; }
+
+          .instances-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: .75rem; padding: .85rem;
+          }
+          .instance-card {
+            background: #0a1428; border: 1px solid #1a2d46;
+            border-radius: 10px; padding: .75rem; position: relative;
+            transition: border-color .2s;
+          }
+          .instance-card:hover { border-color: #2d4a7a; }
+          .instance-card.running { border-color: #1a3d5c; }
+
+          .status-dot-wrap { position: absolute; top: .6rem; right: .6rem; }
+          .status-dot { width: 8px; height: 8px; border-radius: 50%; position: relative; display: inline-block; }
+          .status-dot.running  { background: #4ade80; }
+          .status-dot.stopped  { background: #374151; }
+          .status-dot.prov     { background: #60a5fa; }
+          .status-dot.running::before {
+            content: ''; position: absolute; inset: 0; border-radius: 50%;
+            background: #4ade80; animation: ping 1.2s ease-out infinite;
+          }
+
+          .ins-platform { font-size: 1.1rem; margin-bottom: .35rem; }
+          .ins-id       { font-size: .67rem; color: #475569; font-family: 'Cascadia Code','Fira Code',monospace; margin-bottom: .6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .ins-badge    { display: inline-block; padding: .1rem .45rem; border-radius: 5px; font-size: .62rem; font-weight: 700; text-transform: uppercase; }
+          .badge-running { background: #052e16; color: #4ade80; }
+          .badge-stopped { background: #111827; color: #4b5563; }
+          .badge-prov    { background: #0c1d40; color: #60a5fa; }
+
+          .ins-mem-bar { height: 3px; background: #1a2d46; border-radius: 99px; margin: .5rem 0; overflow: hidden; }
+          .ins-mem-fill { height: 100%; background: #2563eb; border-radius: 99px; transition: width .5s ease; }
+
+          .ins-vol  { font-size: .67rem; color: #334155; font-family: 'Cascadia Code','Fira Code',monospace;
+                      background: #060d1a; border-radius: 5px; padding: .15rem .4rem; margin-top: .4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .ins-meta { font-size: .67rem; color: #374151; margin-top: .3rem; }
+
+          .ins-actions { display: flex; gap: .3rem; margin-top: .6rem; }
+          .btn-icon {
+            padding: .3rem .5rem; border-radius: 6px; border: none;
+            background: #0f1f38; color: #4b5563; cursor: pointer;
+            transition: all .15s; font-size: .75rem; font-family: inherit;
+          }
+          .btn-icon:hover.sleep  { background: #1a2d46; color: #fbbf24; }
+          .btn-icon:hover.wake   { background: #1a2d46; color: #34d399; }
+          .btn-icon:hover.del    { background: #451a1a; color: #f87171; }
+
+          /* docker-run command preview */
+          .cmd-box {
+            background: #040a14; border: 1px solid #1a2d46; border-radius: 10px;
+            padding: .85rem 1rem; font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+            font-size: .75rem; line-height: 1.8; overflow-x: auto; white-space: pre;
+            margin-top: 1rem;
+          }
+          .cmd-c0 { color: #64748b; }   /* comment */
+          .cmd-c1 { color: #60a5fa; }   /* docker run + flags */
+          .cmd-c2 { color: #fbbf24; }   /* volume mounts */
+          .cmd-c3 { color: #34d399; }   /* env vars */
+          .cmd-c4 { color: #c084fc; }   /* image name */
+
+          /* ── Architecture tab ── */
+          .arch-diagram {
+            display: flex; flex-direction: column; gap: .6rem; align-items: center;
+          }
+          .arch-row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; justify-content: center; }
+          .arch-box {
+            border-radius: 12px; padding: .75rem 1.1rem; text-align: center;
+            border: 1px solid; font-size: .8rem; font-weight: 700; min-width: 130px;
+          }
+          .arch-arrow { color: #1e3a5f; font-size: 1.4rem; }
+          .arch-blue   { background: #0c1d40; border-color: #1d4ed8; color: #7dd3fc; }
+          .arch-green  { background: #052e16; border-color: #16a34a; color: #4ade80; }
+          .arch-amber  { background: #1c1200; border-color: #d97706; color: #fcd34d; }
+          .arch-purple { background: #1e1040; border-color: #7c3aed; color: #c4b5fd; }
+          .arch-cyan   { background: #042026; border-color: #0891b2; color: #67e8f9; }
+          .arch-label  { font-size: .65rem; font-weight: 400; opacity: .7; margin-top: .2rem; }
+
+          .gateway-pool {
+            background: #0c1a2e; border: 1px solid #1a2d46; border-radius: 14px;
+            padding: .85rem; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center;
+          }
+          .gw-instance {
+            background: #0f1f38; border: 1px solid #1a3a5c; border-radius: 8px;
+            padding: .4rem .7rem; font-size: .7rem; color: #60a5fa;
+            font-family: 'Cascadia Code','Fira Code',monospace;
+            display: flex; align-items: center; gap: .35rem;
+          }
+          .gw-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+
+          .flow-steps { display: flex; flex-direction: column; gap: .5rem; margin-top: 1.25rem; }
+          .flow-step {
+            display: flex; gap: .85rem; align-items: flex-start;
+            background: #0f1f38; border: 1px solid #1a2d46; border-radius: 10px;
+            padding: .7rem .85rem; cursor: pointer; transition: border-color .2s;
+          }
+          .flow-step:hover { border-color: #2d4f8a; }
+          .flow-step.active { border-color: #1d4ed8; }
+          .step-num {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: #1a2d46; display: flex; align-items: center; justify-content: center;
+            font-size: .7rem; font-weight: 800; flex-shrink: 0; color: #60a5fa;
+          }
+          .step-content { font-size: .82rem; }
+          .step-title   { font-weight: 700; color: #e2e8f0; margin-bottom: .2rem; }
+          .step-detail  { font-size: .73rem; color: #475569; line-height: 1.5; }
+          .step-code    { font-family: 'Cascadia Code','Fira Code',monospace; background: #060d1a; border-radius: 5px; padding: .25rem .5rem; margin-top: .35rem; font-size: .7rem; color: #60a5fa; }
+
+          /* ── Storage tab ── */
+          .tree { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: .78rem; line-height: 2; }
+          .tree-root  { color: #64748b; }
+          .tree-dir   { color: #60a5fa; }
+          .tree-file  { color: #94a3b8; }
+          .tree-tag   { color: #374151; font-size: .65rem; }
+          .tree-indent { padding-left: 1.2rem; }
+
+          .info-card {
+            background: #0f1f38; border: 1px solid #1a2d46; border-radius: 10px; padding: .85rem;
+            display: flex; gap: .65rem; align-items: flex-start; margin-bottom: .6rem;
+          }
+          .info-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
+          .info-body { font-size: .78rem; line-height: 1.6; color: #94a3b8; }
+          .info-body strong { color: #e2e8f0; }
+          .info-blue   { border-color: #1d4ed8; background: #0c1d40; }
+          .info-amber  { border-color: #d97706; background: #1c1200; }
+          .info-green  { border-color: #16a34a; background: #052e16; }
+
+          /* ── Compare tab ── */
+          .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+          .compare-card {
+            background: #0f1f38; border: 1px solid #1a2d46; border-radius: 14px; padding: 1.1rem;
+            display: flex; flex-direction: column; gap: .6rem;
+          }
+          .compare-card.highlight { border-color: #1d4ed8; background: #0c1d40; }
+          .compare-badge {
+            display: inline-block; padding: .2rem .55rem; border-radius: 6px;
+            font-size: .62rem; font-weight: 800; text-transform: uppercase; width: fit-content;
+          }
+          .badge-rec { background: #1d4ed8; color: #bfdbfe; }
+          .badge-mvp { background: #1f2937; color: #6b7280; }
+          .badge-best{ background: #065f46; color: #6ee7b7; }
+          .compare-title { font-size: .95rem; font-weight: 800; color: #f1f5f9; }
+          .compare-cost  { font-size: .8rem; font-weight: 700; color: #fbbf24; }
+          .pro-con { font-size: .75rem; line-height: 1.7; }
+          .pro  { color: #4ade80; } .pro::before { content: '✓ '; }
+          .con  { color: #f87171; } .con::before { content: '✕ '; }
+          .neu  { color: #94a3b8; } .neu::before { content: '◉ '; }
+
+          .cmp-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+          .cmp-table th { text-align: left; padding: .6rem .75rem; color: #64748b; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #1a2d46; }
+          .cmp-table td { padding: .6rem .75rem; border-bottom: 1px solid #0f1f38; color: #94a3b8; }
+          .cmp-table td:first-child { color: #e2e8f0; font-weight: 600; }
+          .cmp-table .good { color: #4ade80; }
+          .cmp-table .bad  { color: #f87171; }
+          .cmp-table .mid  { color: #fbbf24; }
+
+          /* ── Docker 101 tab ── */
+          .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+          .concept-card {
+            background: #0f1f38; border: 1px solid #1a2d46; border-radius: 14px; padding: 1.1rem;
+          }
+          .concept-icon  { font-size: 2rem; margin-bottom: .5rem; }
+          .concept-title { font-size: .9rem; font-weight: 800; color: #e2e8f0; margin-bottom: .4rem; }
+          .concept-body  { font-size: .77rem; color: #94a3b8; line-height: 1.65; }
+          .concept-body strong { color: #7dd3fc; }
+          .concept-mono  { font-family: 'Cascadia Code','Fira Code',monospace; background: #060d1a; padding: .2rem .4rem; border-radius: 4px; font-size: .72em; color: #c084fc; }
+
+          .flow-visual {
+            display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+            background: #060d1a; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+          }
+          .flow-box {
+            padding: .5rem .9rem; border-radius: 8px; font-size: .78rem; font-weight: 700;
+            text-align: center; flex-shrink: 0;
+          }
+          .flow-arrow { color: #1e3a5f; font-size: 1.2rem; flex-shrink: 0; }
+          .fb-file  { background: #1c1200; border: 1px solid #d97706; color: #fcd34d; }
+          .fb-cmd   { background: #0c1d40; border: 1px solid #1d4ed8; color: #93c5fd; font-family: 'Cascadia Code','Fira Code',monospace; font-size: .7rem; }
+          .fb-img   { background: #1e1040; border: 1px solid #7c3aed; color: #c4b5fd; }
+          .fb-ctr   { background: #052e16; border: 1px solid #16a34a; color: #4ade80; }
+
+          .cmd-builder { background: #040a14; border: 1px solid #1a2d46; border-radius: 12px; padding: 1rem; margin-top: .5rem; }
+          .cmd-builder-title { font-size: .75rem; font-weight: 700; color: #60a5fa; margin-bottom: .6rem; display: flex; align-items: center; gap: .4rem; }
+          .cmd-line { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: .73rem; line-height: 1.9; }
+          .c-gray   { color: #334155; }
+          .c-blue   { color: #60a5fa; }
+          .c-yellow { color: #fbbf24; }
+          .c-green  { color: #34d399; }
+          .c-purple { color: #c084fc; }
+          .c-white  { color: #f1f5f9; }
+          .c-red    { color: #f87171; }
+
+          .annotation { display: flex; gap: .5rem; margin-top: .4rem; font-size: .68rem; color: #475569; }
+          .ann-key    { color: #60a5fa; font-weight: 700; min-width: 90px; flex-shrink: 0; }
+        `;
+
+        constructor() {
+          super();
+          this._users   = [];
+          this._logs    = [{ t: now(), msg: 'Docker Engine sẵn sàng. OpenClaw SaaS online.' }];
+          this._tab     = 'dashboard';
+          this._cmdUser = null;
+          this._activeStep = null;
+        }
+
+        /* ── Helpers ── */
+        _log(msg) {
+          this._logs = [{ t: now(), msg }, ...this._logs].slice(0, 20);
+        }
+
+        get _totalRAM() {
+          return this._users.reduce((s, u) =>
+            s + u.instances.reduce((ss, i) => ss + i.memory, 0), 0);
+        }
+        get _totalCPU() {
+          return this._users.reduce((s, u) =>
+            s + u.instances.reduce((ss, i) => ss + i.cpu, 0), 0);
+        }
+        get _totalContainers() {
+          return this._users.reduce((s, u) => s + u.instances.length, 0);
+        }
+        get _runningContainers() {
+          return this._users.reduce((s, u) =>
+            s + u.instances.filter(i => i.status === 'running').length, 0);
+        }
+
+        /* ── Actions ── */
+        _registerUser() {
+          const id   = 'usr_' + uid();
+          const port = 8000 + Math.floor(Math.random() * 1000);
+          const insId = `${id}_bot_1`;
+          const newUser = {
+            id,
+            createdAt: now(),
+            instances: [{
+              id: insId, type: 'Telegram',
+              status: 'provisioning', memory: 0, cpu: 0, port,
+            }],
+          };
+          this._users = [...this._users, newUser];
+          this._log(`Provisioning [openclaw-${id}]... Image: openclaw-gateway:v2`);
+          setTimeout(() => {
+            this._users = this._users.map(u =>
+              u.id !== id ? u : {
+                ...u,
+                instances: u.instances.map(i =>
+                  i.id !== insId ? i : { ...i, status: 'running', memory: 128, cpu: 4 }
+                ),
+              }
+            );
+            this._log(`Container [openclaw-${id}] ready on port :${port}`);
+          }, 1600);
+        }
+
+        _addInstance(userId) {
+          const user = this._users.find(u => u.id === userId);
+          if (!user) return;
+          const used  = user.instances.map(i => i.type);
+          const type  = PLATFORMS.find(p => !used.includes(p)) ?? 'Bot';
+          const insId = `${userId}_bot_${user.instances.length + 1}`;
+          const port  = 9000 + Math.floor(Math.random() * 500);
+          this._users = this._users.map(u =>
+            u.id !== userId ? u : {
+              ...u,
+              instances: [...u.instances, { id: insId, type, status: 'provisioning', memory: 0, cpu: 0, port }],
+            }
+          );
+          this._log(`Khởi tạo instance [${insId}] cho ${type}...`);
+          setTimeout(() => {
+            this._users = this._users.map(u =>
+              u.id !== userId ? u : {
+                ...u,
+                instances: u.instances.map(i =>
+                  i.id !== insId ? i : { ...i, status: 'running', memory: 96, cpu: 3 }
+                ),
+              }
+            );
+            this._log(`[${insId}] (${type}) đang chạy.`);
+          }, 1200);
+        }
+
+        _toggleInstance(userId, insId) {
+          this._users = this._users.map(u =>
+            u.id !== userId ? u : {
+              ...u,
+              instances: u.instances.map(i => {
+                if (i.id !== insId) return i;
+                const running = i.status === 'running';
+                this._log(running
+                  ? `Dừng [${insId}] → giải phóng ${i.memory}MB RAM (Volume an toàn)`
+                  : `Khởi động [${insId}] → load SQLite từ Volume`);
+                return { ...i, status: running ? 'stopped' : 'running', memory: running ? 0 : 128, cpu: running ? 0 : 4 };
+              }),
+            }
+          );
+        }
+
+        _removeInstance(userId, insId) {
+          this._users = this._users.map(u =>
+            u.id !== userId ? u : { ...u, instances: u.instances.filter(i => i.id !== insId) }
+          );
+          this._log(`Đã xóa container [${insId}]`);
+        }
+
+        _removeUser(userId) {
+          this._users = this._users.filter(u => u.id !== userId);
+          if (this._cmdUser === userId) this._cmdUser = null;
+          this._log(`Đã xóa account + volume: /data/users/${userId}/`);
+        }
+
+        /* ════════════════════════════════════════════════════════
+           RENDER
+        ════════════════════════════════════════════════════════ */
+        render() {
+          const ram    = this._totalRAM;
+          const cpu    = this._totalCPU;
+          const ramPct = clamp((ram / 8192) * 100, 0, 100);
+          const cpuPct = clamp(cpu, 0, 100);
+          const ramBar = ramPct > 75 ? 'bar-red' : 'bar-blue';
+
+          return html`
+            <div class="app">
+
+              <!-- ── Header ── -->
+              <header class="header">
+                <div class="header-logo">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <rect width="28" height="28" rx="8" fill="#1d4ed8"/>
+                    <rect x="5" y="10" width="5" height="5" rx="1.5" fill="#60a5fa"/>
+                    <rect x="11.5" y="10" width="5" height="5" rx="1.5" fill="#60a5fa"/>
+                    <rect x="18" y="10" width="5" height="5" rx="1.5" fill="#60a5fa"/>
+                    <rect x="5" y="17" width="5" height="5" rx="1.5" fill="#93c5fd"/>
+                    <rect x="11.5" y="17" width="5" height="5" rx="1.5" fill="#93c5fd"/>
+                    <path d="M20 14h5" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <div>
+                    <div class="logo-text">OpenClaw SaaS</div>
+                    <div class="logo-sub">Docker Interactive Guide</div>
+                  </div>
+                </div>
+                <nav class="tabs">
+                  ${TABS.map(t => html`
+                    <button
+                      class="tab-btn ${this._tab === t.id ? 'active' : ''}"
+                      @click=${() => { this._tab = t.id; }}
+                    >${t.label}</button>
+                  `)}
+                </nav>
+              </header>
+
+              <!-- ── Body ── -->
+              <div class="body">
+
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                  <!-- Server metrics -->
+                  <div class="panel">
+                    <div class="panel-title">
+                      <span>⚙</span> Host Server (VPS)
+                    </div>
+                    <div class="stat-row">
+                      <span>RAM (${ram} MB / 8192 MB)</span>
+                      <span style="color:${ramPct>75?'#f87171':'#60a5fa'}">${ramPct.toFixed(1)}%</span>
+                    </div>
+                    <div class="bar-track">
+                      <div class="bar-fill ${ramBar}" style="width:${ramPct}%"></div>
+                    </div>
+                    <div class="stat-row">
+                      <span>CPU Load</span>
+                      <span style="color:#4ade80">${cpuPct}%</span>
+                    </div>
+                    <div class="bar-track">
+                      <div class="bar-fill bar-green" style="width:${cpuPct}%"></div>
+                    </div>
+                    <div class="metrics">
+                      <div class="metric">
+                        <div class="metric-val" style="color:#60a5fa">${this._totalContainers}</div>
+                        <div class="metric-name">Containers</div>
+                      </div>
+                      <div class="metric">
+                        <div class="metric-val" style="color:#4ade80">${this._runningContainers}</div>
+                        <div class="metric-name">Running</div>
+                      </div>
+                      <div class="metric">
+                        <div class="metric-val" style="color:#a78bfa">${this._users.length}</div>
+                        <div class="metric-name">Users</div>
+                      </div>
+                      <div class="metric">
+                        <div class="metric-val" style="color:#fbbf24">${this._totalContainers - this._runningContainers}</div>
+                        <div class="metric-name">Sleeping</div>
+                      </div>
+                    </div>
+                    <button class="btn-primary" @click=${this._registerUser}>
+                      <span>＋</span> Đăng ký User mới
+                    </button>
+                  </div>
+
+                  <!-- Image info -->
+                  <div class="panel">
+                    <div class="panel-title"><span>📦</span> Docker Image</div>
+                    <div class="tree mono" style="font-size:.72rem;line-height:1.9">
+                      <div style="color:#c084fc">openclaw-gateway:v2</div>
+                      <div class="tree-indent" style="color:#475569">BASE: node:20-alpine</div>
+                      <div class="tree-indent" style="color:#475569">SIZE: ~48 MB</div>
+                      <div class="tree-indent" style="color:#475569">CMD : ["node","gateway.js"]</div>
+                    </div>
+                  </div>
+
+                  <!-- Event log -->
+                  <div class="panel" style="flex:1">
+                    <div class="panel-title"><span>📋</span> Docker Events</div>
+                    <div class="log-box">
+                      ${this._logs.map((l, i) => html`
+                        <div class="log-entry ${i===0?'fresh':''} anim-slide">
+                          <span class="log-time">[${l.t}]</span>${l.msg}
+                        </div>
+                      `)}
+                    </div>
+                  </div>
+                </aside>
+
+                <!-- Main content -->
+                <main class="main">
+                  ${this._tab === 'dashboard'    ? this._renderDashboard()    : nothing}
+                  ${this._tab === 'architecture' ? this._renderArchitecture() : nothing}
+                  ${this._tab === 'storage'      ? this._renderStorage()      : nothing}
+                  ${this._tab === 'compare'      ? this._renderCompare()      : nothing}
+                  ${this._tab === 'docker101'    ? this._renderDocker101()    : nothing}
+                </main>
+              </div>
+            </div>
+          `;
+        }
+
+        /* ════════════════════════════════════════════════════════
+           TAB: Dashboard
+        ════════════════════════════════════════════════════════ */
+        _renderDashboard() {
+          const cmdUser = this._users.find(u => u.id === this._cmdUser) ?? this._users[0];
+          return html`
+            <div class="anim-slide">
+              <div class="section-title">
+                <span>🖥</span> Quản lý Container theo User
+              </div>
+
+              ${this._users.length === 0 ? html`
+                <div class="empty-state">
+                  <div class="empty-icon">📦</div>
+                  <div style="font-weight:700;color:#334155">Chưa có container nào</div>
+                  <div style="font-size:.8rem;color:#1e3050">Nhấn "Đăng ký User mới" ở sidebar để bắt đầu</div>
+                </div>
+              ` : this._users.map(user => html`
+                <div class="user-card anim-slide" key=${user.id}>
+                  <div class="user-head">
+                    <div class="user-avatar">${user.id.slice(4, 6).toUpperCase()}</div>
+                    <div>
+                      <div class="user-id">${user.id}</div>
+                      <div class="user-meta">Khởi tạo lúc ${user.createdAt} · ${user.instances.length} container(s)</div>
+                    </div>
+                    <button class="btn-ghost" @click=${() => this._addInstance(user.id)}>
+                      ＋ Thêm Bot
+                    </button>
+                    <button class="btn-danger" title="Xóa user & volume" @click=${() => this._removeUser(user.id)}>🗑</button>
+                  </div>
+                  <div class="instances-grid">
+                    ${user.instances.map(ins => this._renderInstance(user.id, ins))}
+                  </div>
+                </div>
+              `)}
+
+              ${cmdUser ? html`
+                <div class="section-title" style="margin-top:1.5rem;font-size:.9rem">
+                  <span>💻</span> Docker Run Command — <span style="font-family:monospace;color:#60a5fa">${cmdUser.id}</span>
+                  ${this._users.length > 1 ? html`
+                    <select
+                      style="margin-left:auto;background:#0f1f38;border:1px solid #1a2d46;color:#94a3b8;border-radius:6px;padding:.25rem .5rem;font-size:.75rem;cursor:pointer"
+                      @change=${(e) => { this._cmdUser = e.target.value; }}
+                    >
+                      ${this._users.map(u => html`<option value=${u.id} ?selected=${u.id === cmdUser.id}>${u.id}</option>`)}
+                    </select>
+                  ` : nothing}
+                </div>
+                ${this._renderDockerRunCmd(cmdUser)}
+              ` : nothing}
+            </div>
+          `;
+        }
+
+        _renderInstance(userId, ins) {
+          const running = ins.status === 'running';
+          const prov    = ins.status === 'provisioning';
+          const memPct  = (ins.memory / 256) * 100;
+          const dotCls  = prov ? 'prov anim-pulse' : (running ? 'running' : 'stopped');
+          const badgeCls= prov ? 'badge-prov' : (running ? 'badge-running' : 'badge-stopped');
+          const statusLabel = prov ? 'Starting...' : (running ? 'running' : 'stopped');
+
+          return html`
+            <div class="instance-card ${running ? 'running' : ''} anim-slide">
+              <div class="status-dot-wrap">
+                <span class="status-dot ${dotCls}"></span>
+              </div>
+              <div class="ins-platform">${PLATFORM_EMOJI[ins.type] ?? '🤖'}</div>
+              <div class="ins-id" title=${ins.id}>${ins.id}</div>
+              <span class="ins-badge ${badgeCls}">${statusLabel}</span>
+              <div class="ins-mem-bar">
+                <div class="ins-mem-fill" style="width:${memPct}%"></div>
+              </div>
+              <div class="ins-meta">${ins.type} · ${ins.memory}MB / 256MB · CPU: ${ins.cpu}%</div>
+              <div class="ins-vol">/data/users/${userId}/</div>
+              <div class="ins-actions">
+                <button
+                  class="btn-icon ${running ? 'sleep' : 'wake'}"
+                  title="${running ? 'Sleep (tiết kiệm RAM)' : 'Wake up'}"
+                  ?disabled=${prov}
+                  @click=${() => this._toggleInstance(userId, ins.id)}
+                >${running ? '😴' : '⚡'} ${running ? 'Sleep' : 'Wake'}</button>
+                <button class="btn-icon del" title="Xóa container" @click=${() => this._removeInstance(userId, ins.id)}>🗑</button>
+              </div>
+            </div>
+          `;
+        }
+
+        _renderDockerRunCmd(user) {
+          const ins  = user.instances[0];
+          const port = ins?.port ?? 8080;
+          return html`
+            <div class="cmd-box">
+<span class="cmd-c0"># Control Plane gọi lệnh này khi user kích hoạt bot</span>
+<span class="cmd-c1">docker run</span> <span class="cmd-c1">-d</span> \\
+  <span class="cmd-c1">--name</span>     <span class="cmd-c0">openclaw-${user.id}</span> \\
+  <span class="cmd-c1">--memory</span>   <span class="cmd-c0">"256m"</span>             <span class="cmd-c0"> # giới hạn RAM (tránh noisy-neighbor)</span>
+  <span class="cmd-c1">--cpus</span>     <span class="cmd-c0">"0.5"</span>             <span class="cmd-c0"> # giới hạn CPU</span>
+  <span class="cmd-c2">-v</span>         <span class="cmd-c2">/data/users/${user.id}:/app/data</span> <span class="cmd-c0"> # Volume mount (persist)</span>
+  <span class="cmd-c1">-p</span>         <span class="cmd-c1">127.0.0.1:${port}:3000</span>    <span class="cmd-c0"> # chỉ expose nội bộ</span>
+  <span class="cmd-c3">-e</span>         <span class="cmd-c3">USER_ID=${user.id}</span> \\
+  <span class="cmd-c3">-e</span>         <span class="cmd-c3">DATA_DIR=/app/data</span> \\
+  <span class="cmd-c3">-e</span>         <span class="cmd-c3">LOG_LEVEL=info</span> \\
+  <span class="cmd-c1">--restart</span>  <span class="cmd-c0">unless-stopped</span>     <span class="cmd-c0"> # auto-restart nếu crash</span>
+  <span class="cmd-c1">--network</span>  <span class="cmd-c0">openclaw-net</span>       <span class="cmd-c0"> # isolated bridge network</span>
+  <span class="cmd-c4">openclaw-gateway:v2</span>
+            </div>
+          `;
+        }
+
+        /* ════════════════════════════════════════════════════════
+           TAB: Architecture
+        ════════════════════════════════════════════════════════ */
+        _renderArchitecture() {
+          const steps = [
+            { n:1,  title:'User mở browser', detail:'Next.js SPA tải trang Dashboard từ CDN/GitHub Pages.',
+              code:'https://app.openclaw.ai → Browser renders React SPA' },
+            { n:2,  title:'Đăng nhập / Đăng ký', detail:'Better-Auth xử lý OAuth2 (Google/GitHub) hoặc magic link qua email.',
+              code:'POST /api/auth/login → session cookie (httpOnly)' },
+            { n:3,  title:'Control Plane nhận yêu cầu provisioning', detail:'Fastify API tạo user record trong PostgreSQL, enqueue provisioning job vào BullMQ.',
+              code:'POST /api/provision → queue.add("spawn", { userId })' },
+            { n:4,  title:'Worker spawn container', detail:'Docker SDK gọi docker run, gắn volume riêng, đặt resource limit.',
+              code:'docker run -d --memory=256m -v /data/${userId}:... openclaw-gateway:v2' },
+            { n:5,  title:'Gateway health-check', detail:'Control Plane poll GET /health mỗi 2s. Sau khi 200 OK → báo cho frontend.',
+              code:'GET http://127.0.0.1:${port}/health → 200 OK (cold start ~10-20s)' },
+            { n:6,  title:'User kết nối kênh', detail:'Nhập Bot Token (Telegram) hoặc quét QR (WhatsApp/Zalo) ngay trong browser.',
+              code:'Control Plane gửi token (encrypted) vào Gateway qua IPC/REST' },
+            { n:7,  title:'WebSocket proxy route', detail:'Nginx sticky-session proxy WebSocket từ browser đến đúng container của user.',
+              code:'wss://app.openclaw.ai/ws/${userId} → gateway-${userId}:3000' },
+            { n:8,  title:'Bot hoạt động 24/7', detail:'Gateway kết nối Telegram/Zalo/WhatsApp. AI trả lời tự động. Data lưu vào SQLite trong Volume.',
+              code:'Gateway ↔ Telegram/WhatsApp/Discord ↔ OpenAI/Gemini' },
+            { n:9,  title:'Sleep khi không dùng (Free tier)', detail:'Sau 10 phút idle, Control Plane gửi SIGTERM → container graceful shutdown, RAM giải phóng.',
+              code:'docker stop openclaw-${userId}  # volume vẫn còn nguyên' },
+            { n:10, title:'Wake up khi có message mới', detail:'Webhook/push kích hoạt Control Plane → docker start → load state từ Volume → xử lý message.',
+              code:'docker start openclaw-${userId}  # tiếp tục từ lần dừng' },
+          ];
+
+          const gwUsers = this._users.length > 0
+            ? this._users.map(u => u.id)
+            : ['usr_abc1', 'usr_def2', 'usr_ghi3'];
+
+          return html`
+            <div class="anim-slide">
+              <div class="section-title"><span>🏗</span> Kiến trúc OpenClaw SaaS</div>
+
+              <!-- Architecture diagram -->
+              <div class="arch-diagram" style="margin-bottom:1.75rem">
+                <div class="arch-row">
+                  <div class="arch-box arch-blue">
+                    Browser / SPA
+                    <div class="arch-label">Next.js · React</div>
+                  </div>
+                  <div class="arch-arrow">→</div>
+                  <div class="arch-box arch-amber">
+                    API Gateway
+                    <div class="arch-label">Nginx / Cloudflare</div>
+                  </div>
+                  <div class="arch-arrow">→</div>
+                  <div class="arch-box arch-purple">
+                    Control Plane
+                    <div class="arch-label">Fastify · BullMQ</div>
+                  </div>
+                </div>
+                <div style="color:#1e3a5f;font-size:1.4rem">↓</div>
+                <div style="font-size:.72rem;color:#334155;margin-bottom:.3rem;text-align:center">Docker Engine (VPS / K3s)</div>
+                <div class="gateway-pool" style="max-width:600px">
+                  ${gwUsers.map(uid => html`
+                    <div class="gw-instance">
+                      <div class="gw-dot"></div>
+                      openclaw-${uid}
+                    </div>
+                  `)}
+                  <div class="gw-instance" style="color:#1e3050;border-color:#0f1f38">
+                    + more...
+                  </div>
+                </div>
+                <div style="color:#1e3a5f;font-size:1.4rem">↕</div>
+                <div class="arch-row">
+                  <div class="arch-box arch-cyan" style="min-width:100px">Telegram</div>
+                  <div class="arch-box arch-cyan" style="min-width:100px">WhatsApp</div>
+                  <div class="arch-box arch-cyan" style="min-width:100px">Zalo</div>
+                  <div class="arch-box arch-cyan" style="min-width:100px">Discord</div>
+                </div>
+              </div>
+
+              <!-- Provisioning flow -->
+              <div class="section-title" style="font-size:.9rem"><span>🔄</span> Luồng Provisioning (User → Bot Active)</div>
+              <div class="flow-steps">
+                ${steps.map(s => html`
+                  <div
+                    class="flow-step ${this._activeStep === s.n ? 'active' : ''}"
+                    @click=${() => { this._activeStep = this._activeStep === s.n ? null : s.n; }}
+                  >
+                    <div class="step-num">${s.n}</div>
+                    <div class="step-content">
+                      <div class="step-title">${s.title}</div>
+                      ${this._activeStep === s.n ? html`
+                        <div class="step-detail">${s.detail}</div>
+                        <div class="step-code mono">${s.code}</div>
+                      ` : nothing}
+                    </div>
+                    <span style="margin-left:auto;color:#1e3a5f;font-size:.8rem">${this._activeStep === s.n ? '▲' : '▼'}</span>
+                  </div>
+                `)}
+              </div>
+            </div>
+          `;
+        }
+
+        /* ════════════════════════════════════════════════════════
+           TAB: Storage
+        ════════════════════════════════════════════════════════ */
+        _renderStorage() {
+          const users = this._users.length > 0 ? this._users : null;
+          return html`
+            <div class="anim-slide">
+              <div class="section-title"><span>💾</span> Hệ thống Volume — Lưu trữ ngoài Container</div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+                @media(max-width:640px){grid-template-columns:1fr}
+
+                <!-- File tree -->
+                <div class="panel">
+                  <div class="panel-title"><span>📁</span> Cấu trúc thư mục (Host)</div>
+                  <div class="tree">
+                    <div class="tree-root">/data/users/ <span class="tree-tag">(Persistent Storage Root)</span></div>
+                    ${users ? users.map(u => html`
+                      <div class="tree-indent">
+                        <div class="tree-dir">📁 ${u.id}/</div>
+                        <div class="tree-indent">
+                          <div class="tree-file">├─ 📄 openclaw.db <span class="tree-tag">(SQLite · messages · tasks)</span></div>
+                          <div class="tree-file">├─ 📄 config.json <span class="tree-tag">(tokens · AES-256 encrypted)</span></div>
+                          <div class="tree-file">├─ 📁 logs/</div>
+                          <div class="tree-indent">
+                            <div class="tree-file">│  ├─ gateway.log <span class="tree-tag">(7d TTL)</span></div>
+                            <div class="tree-file">│  └─ audit.log   <span class="tree-tag">(90d TTL)</span></div>
+                          </div>
+                          <div class="tree-file">├─ 📁 attachments/ <span class="tree-tag">(files user gửi)</span></div>
+                          <div class="tree-file">└─ 📁 backups/</div>
+                          <div class="tree-indent">
+                            <div class="tree-file">└─ 2026-04-16.tar.gz</div>
+                          </div>
+                        </div>
+                      </div>
+                    `) : html`
+                      <div class="tree-indent" style="color:#1e3050;font-style:italic">
+                        Thêm User để xem cấu trúc...
+                      </div>
+                    `}
+                  </div>
+                </div>
+
+                <!-- Explanations -->
+                <div style="display:flex;flex-direction:column;gap:.75rem">
+                  <div class="info-card info-blue">
+                    <div class="info-icon">💡</div>
+                    <div class="info-body">
+                      <strong>Tại sao cần Volume?</strong><br>
+                      Dữ liệu bên trong Container là <strong>ephemeral</strong> — khi container bị
+                      xóa hay cập nhật, dữ liệu mất hoàn toàn. Volume "mount" thư mục từ ổ cứng
+                      Host vào trong container. Bot có thể dừng/chạy bao nhiêu lần mà không mất
+                      lịch sử chat hay cấu hình.
+                    </div>
+                  </div>
+                  <div class="info-card info-amber">
+                    <div class="info-icon">🔒</div>
+                    <div class="info-body">
+                      <strong>1 User = 1 Thư mục riêng</strong><br>
+                      Mỗi user có namespace hoàn toàn tách biệt. Khi User A xóa tài khoản, chỉ
+                      cần <code style="font-family:monospace;font-size:.85em">rm -rf /data/users/usr_abc/</code> —
+                      không ảnh hưởng bất kỳ user nào khác.
+                    </div>
+                  </div>
+                  <div class="info-card info-green">
+                    <div class="info-icon">🔑</div>
+                    <div class="info-body">
+                      <strong>Bảo mật Token</strong><br>
+                      Bot token & API key được mã hóa <strong>AES-256-GCM</strong> trước khi ghi
+                      vào config.json. Key quản lý bởi KMS (AWS/Cloudflare). Staff không thể đọc
+                      token của user.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Volume lifecycle -->
+              <div class="section-title" style="font-size:.9rem"><span>⏱</span> Vòng đời dữ liệu</div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem">
+                ${[
+                  { icon:'🚀', label:'Container Start', desc:'Docker mount volume vào /app/data, SQLite mở file db, load config.', color:'#1d4ed8' },
+                  { icon:'💤', label:'Container Sleep', desc:'SQLite flush WAL, container dừng. File .db vẫn tồn tại trên Host.', color:'#d97706' },
+                  { icon:'⚡', label:'Container Wake', desc:'Docker start lại, mount cùng volume, load đúng data cũ — không mất.', color:'#16a34a' },
+                  { icon:'🗑',  label:'Container Delete', desc:'Container xóa nhưng volume vẫn còn nếu dùng --volumes-from hoặc named volume.', color:'#dc2626' },
+                  { icon:'👤', label:'User Delete', desc:'Control Plane xóa container + volume. Data xóa hoàn toàn trong 30 ngày.', color:'#7c3aed' },
+                ].map(item => html`
+                  <div class="panel" style="border-color:${item.color}22;text-align:center">
+                    <div style="font-size:1.5rem;margin-bottom:.4rem">${item.icon}</div>
+                    <div style="font-size:.78rem;font-weight:700;color:#e2e8f0;margin-bottom:.3rem">${item.label}</div>
+                    <div style="font-size:.7rem;color:#64748b;line-height:1.5">${item.desc}</div>
+                  </div>
+                `)}
+              </div>
+            </div>
+          `;
+        }
+
+        /* ════════════════════════════════════════════════════════
+           TAB: Compare
+        ════════════════════════════════════════════════════════ */
+        _renderCompare() {
+          return html`
+            <div class="anim-slide">
+              <div class="section-title"><span>⚖</span> So sánh Mô hình Triển khai</div>
+
+              <div class="compare-grid">
+                <!-- Shared VPS -->
+                <div class="compare-card">
+                  <span class="compare-badge badge-mvp">MVP Phase</span>
+                  <div class="compare-title">A · Shared VPS</div>
+                  <div class="compare-cost">~$40–80 / tháng → 20–40 users</div>
+                  <div class="pro-con">
+                    <div class="pro">Chi phí thấp nhất, triển khai nhanh</div>
+                    <div class="pro">Đơn giản — 1 VPS + PM2/systemd</div>
+                    <div class="con">Noisy-neighbor: user A ảnh hưởng user B</div>
+                    <div class="con">Bảo mật thấp hơn (cùng process space)</div>
+                    <div class="con">Scale thủ công, phức tạp</div>
+                    <div class="neu">Phù hợp: 0–100 user đầu tiên (MVP)</div>
+                  </div>
+                </div>
+
+                <!-- Per-user Container -->
+                <div class="compare-card highlight">
+                  <span class="compare-badge badge-rec">★ Khuyến nghị</span>
+                  <div class="compare-title">B · Per-user Container</div>
+                  <div class="compare-cost">~$0.5–2 / user / tháng</div>
+                  <div class="pro-con">
+                    <div class="pro">Hoàn toàn cô lập (kernel namespace)</div>
+                    <div class="pro">Resource limit dễ (--memory --cpus)</div>
+                    <div class="pro">Scale tự động, dễ migration</div>
+                    <div class="pro">GDPR-compliant, dễ audit</div>
+                    <div class="con">Chi phí RAM nền ~20–40MB/container</div>
+                    <div class="con">Cần biết Docker/K8s</div>
+                    <div class="neu">Phù hợp: từ 100+ users trở lên</div>
+                  </div>
+                </div>
+
+                <!-- Hybrid -->
+                <div class="compare-card">
+                  <span class="compare-badge badge-best">Best Practice</span>
+                  <div class="compare-title">C · Hybrid Tiers</div>
+                  <div class="compare-cost">Tối ưu chi phí theo tier</div>
+                  <div class="pro-con">
+                    <div class="pro">Free tier → Shared VPS (sleep sau 10 phút)</div>
+                    <div class="pro">Pro tier → Dedicated Container (always-on)</div>
+                    <div class="pro">Team tier → Dedicated VPS + custom domain</div>
+                    <div class="neu">Cách Render, Railway, Fly.io đang làm</div>
+                    <div class="neu">Upsell tự nhiên theo nhu cầu user</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Comparison table -->
+              <div class="panel">
+                <div class="panel-title"><span>📊</span> Bảng so sánh chi tiết</div>
+                <div style="overflow-x:auto">
+                  <table class="cmp-table">
+                    <thead>
+                      <tr>
+                        <th>Tiêu chí</th>
+                        <th>Shared VPS</th>
+                        <th>Per-user Container</th>
+                        <th>Hybrid</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${[
+                        ['Bảo mật (Data Leak)',   'bad:Rủi ro cao',       'good:Rất cao',       'good:Tốt'],
+                        ['Cô lập RAM/CPU',        'bad:Không',             'good:Dễ (Docker)',   'good:Theo tier'],
+                        ['Chi phí RAM nền',       'good:Thấp nhất',        'mid:20–40MB/ctr',    'mid:Tùy tier'],
+                        ['Scaling',               'bad:Thủ công',          'good:Auto (K8s)',    'good:Auto'],
+                        ['Độ phức tạp ops',       'good:Thấp',             'mid:Trung bình',     'mid:Cao hơn'],
+                        ['Break-even users',      'good:1 user',           'mid:~6 Pro users',   'mid:Theo tier'],
+                        ['GDPR compliance',       'bad:Khó',               'good:Dễ',            'good:Tốt'],
+                        ['Update per-user',       'bad:Không (toàn hệ)',   'good:Linh hoạt',     'good:Theo tier'],
+                      ].map(([label, ...cols]) => html`
+                        <tr>
+                          <td>${label}</td>
+                          ${cols.map(c => {
+                            const [cls, text] = c.split(':');
+                            return html`<td class="${cls}">${text}</td>`;
+                          })}
+                        </tr>
+                      `)}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Cost estimates -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+                <div class="panel">
+                  <div class="panel-title"><span>💰</span> Chi phí Free Tier</div>
+                  <div class="pro-con" style="font-size:.78rem;color:#94a3b8;line-height:1.9">
+                    <div>Container ngủ sau 10 phút idle → ~0 CPU</div>
+                    <div>Storage 500MB → ~$0.01/tháng</div>
+                    <div>Bandwidth tối thiểu → ~$0.05</div>
+                    <div style="color:#fbbf24;font-weight:700">Tổng: ~$0.20 / user / tháng</div>
+                  </div>
+                </div>
+                <div class="panel">
+                  <div class="panel-title"><span>💎</span> Chi phí Pro Tier ($9/tháng)</div>
+                  <div class="pro-con" style="font-size:.78rem;color:#94a3b8;line-height:1.9">
+                    <div>Container always-on 256MB → ~$1.5/tháng</div>
+                    <div>Storage 5GB → ~$0.12/tháng</div>
+                    <div>Bandwidth + overhead → ~$0.5/tháng</div>
+                    <div style="color:#4ade80;font-weight:700">Margin: ~$6.88 / user / tháng (76%)</div>
+                  </div>
+                </div>
+              </div>
+              <div class="info-card info-blue" style="margin-top:.75rem">
+                <div class="info-icon">📈</div>
+                <div class="info-body">
+                  <strong>Break-even:</strong> 1 VPS Hetzner CPX41 ($48/tháng, 8vCPU/16GB) = ~60 always-on Pro users.
+                  Chỉ cần <strong>6 Pro users</strong> để hòa vốn 1 VPS.
+                  Tại <strong>100 Pro users</strong> = $900 MRR với chi phí server ~$100 → margin ~89%.
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        /* ════════════════════════════════════════════════════════
+           TAB: Docker 101
+        ════════════════════════════════════════════════════════ */
+        _renderDocker101() {
+          return html`
+            <div class="anim-slide">
+              <div class="section-title"><span>🐳</span> Docker 101 — Kiến thức cốt lõi</div>
+
+              <!-- Build flow visual -->
+              <div class="flow-visual" style="margin-bottom:1.25rem">
+                <div class="flow-box fb-file">Dockerfile</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box fb-cmd">docker build</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box fb-img">📦 Image<div style="font-size:.62rem;opacity:.6">Read-only</div></div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box fb-cmd">docker run</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box fb-ctr">📦 Container<div style="font-size:.62rem;opacity:.6">Running</div></div>
+                <div class="flow-arrow">×N</div>
+                <div class="flow-box fb-ctr" style="opacity:.6">📦 Container<div style="font-size:.62rem;opacity:.6">Many instances</div></div>
+              </div>
+
+              <!-- Concept cards -->
+              <div class="concept-grid">
+                <div class="concept-card" style="border-color:#1d4ed850">
+                  <div class="concept-icon">📦</div>
+                  <div class="concept-title">Docker Image</div>
+                  <div class="concept-body">
+                    Giống như file <strong>.ISO</strong> hoặc bản thiết kế blueprint.
+                    Chứa code, runtime, dependencies. Image là <strong>Read-only</strong> —
+                    không thay đổi dù bạn chạy bao nhiêu container.<br><br>
+                    <span class="concept-mono">docker pull openclaw-gateway:v2</span><br>
+                    <span class="concept-mono">docker images</span>
+                  </div>
+                </div>
+
+                <div class="concept-card" style="border-color:#16a34a50">
+                  <div class="concept-icon">🚀</div>
+                  <div class="concept-title">Docker Container</div>
+                  <div class="concept-body">
+                    "Chạy" Image → tạo ra Container. Đây là <strong>instance</strong> thực đang hoạt động.
+                    Mỗi container có filesystem riêng (writable layer on top of image).<br><br>
+                    1 Image → N Containers (mỗi user 1 container, cùng code)<br><br>
+                    <span class="concept-mono">docker ps -a</span>
+                  </div>
+                </div>
+
+                <div class="concept-card" style="border-color:#d9770650">
+                  <div class="concept-icon">💾</div>
+                  <div class="concept-title">Volume (Lưu trữ)</div>
+                  <div class="concept-body">
+                    Dữ liệu trong container là <strong>ephemeral</strong> — xóa container = mất data.
+                    Volume mount thư mục Host vào container. Data tồn tại độc lập với container lifecycle.<br><br>
+                    <span class="concept-mono">-v /host/path:/container/path</span>
+                  </div>
+                </div>
+
+                <div class="concept-card" style="border-color:#7c3aed50">
+                  <div class="concept-icon">🔒</div>
+                  <div class="concept-title">Network Isolation</div>
+                  <div class="concept-body">
+                    Mỗi container chạy trong <strong>bridge network</strong> riêng.
+                    Container không thể nói chuyện với nhau trừ khi bạn cho phép.
+                    Port chỉ expose về localhost (127.0.0.1) — Nginx làm proxy.<br><br>
+                    <span class="concept-mono">--network openclaw-net</span>
+                  </div>
+                </div>
+
+                <div class="concept-card" style="border-color:#0891b250">
+                  <div class="concept-icon">⚙</div>
+                  <div class="concept-title">Resource Limits</div>
+                  <div class="concept-body">
+                    Giới hạn CPU/RAM để tránh <strong>noisy-neighbor problem</strong>:
+                    1 user không thể chiếm hết tài nguyên server, làm chậm user khác.<br><br>
+                    <span class="concept-mono">--memory="256m"</span><br>
+                    <span class="concept-mono">--cpus="0.5"</span>
+                  </div>
+                </div>
+
+                <div class="concept-card" style="border-color:#dc262650">
+                  <div class="concept-icon">🔄</div>
+                  <div class="concept-title">Sleep / Wake Pattern</div>
+                  <div class="concept-body">
+                    Free tier tối ưu chi phí bằng cách <strong>dừng container</strong> sau idle.
+                    Volume giữ toàn bộ data. Khi user quay lại, container start lại trong vài giây,
+                    mount cùng volume → <strong>không mất gì</strong>.<br><br>
+                    <span class="concept-mono">docker stop / docker start</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Docker run command breakdown -->
+              <div class="section-title" style="font-size:.9rem"><span>🔍</span> Giải thích từng flag trong lệnh docker run</div>
+              <div class="cmd-builder">
+                <div class="cmd-builder-title"><span>💻</span> Lệnh thực tế OpenClaw SaaS dùng</div>
+                <div class="cmd-line">
+<span class="c-blue">docker run</span> <span class="c-blue">-d</span> <span class="c-gray">                           # detached mode (chạy nền)</span>
+  <span class="c-blue">--name</span>     <span class="c-white">openclaw-usr_abc1</span> <span class="c-gray">          # tên container duy nhất per user</span>
+  <span class="c-blue">--memory</span>   <span class="c-white">"256m"</span> <span class="c-gray">                    # giới hạn RAM 256MB</span>
+  <span class="c-blue">--memory-swap</span> <span class="c-white">"256m"</span> <span class="c-gray">                 # tắt swap (tránh ảnh hưởng host)</span>
+  <span class="c-blue">--cpus</span>     <span class="c-white">"0.5"</span> <span class="c-gray">                    # tối đa 0.5 vCPU</span>
+  <span class="c-yellow">-v</span>         <span class="c-yellow">/data/users/usr_abc1:/app/data</span> <span class="c-gray"># volume mount</span>
+  <span class="c-blue">-p</span>         <span class="c-white">127.0.0.1:8342:3000</span> <span class="c-gray">       # expose nội bộ → Nginx proxy</span>
+  <span class="c-green">-e</span>         <span class="c-green">USER_ID=usr_abc1</span> <span class="c-gray">           # env var</span>
+  <span class="c-green">-e</span>         <span class="c-green">NODE_ENV=production</span>
+  <span class="c-blue">--restart</span>  <span class="c-white">unless-stopped</span> <span class="c-gray">            # auto-restart nếu crash</span>
+  <span class="c-blue">--network</span>  <span class="c-white">openclaw-net</span> <span class="c-gray">               # bridge network cách ly</span>
+  <span class="c-blue">--read-only</span> <span class="c-gray">                          # filesystem read-only (bảo mật)</span>
+  <span class="c-blue">--tmpfs</span>    <span class="c-white">/tmp</span> <span class="c-gray">                       # /tmp ghi được (in memory)</span>
+  <span class="c-purple">openclaw-gateway:v2</span> <span class="c-gray">                   # image:tag</span>
+                </div>
+              </div>
+
+              <!-- Annotations -->
+              <div style="display:flex;flex-direction:column;gap:.35rem;margin-top:.85rem">
+                ${[
+                  ['-d',             'Detached — container chạy nền, terminal không bị block'],
+                  ['--memory',       'Hard limit RAM. Vượt quá → container bị OOM-killed, user khác an toàn'],
+                  ['--cpus',         'Cgroup CPU quota. 0.5 = 50% của 1 vCPU. Không ảnh hưởng container khác'],
+                  ['-v host:ctr',    'Bind mount. Thư mục host xuất hiện tại đường dẫn bên trong container'],
+                  ['-p 127.0.0.1:X', 'Chỉ expose port về localhost. Nginx proxy từ ngoài vào — bảo mật hơn'],
+                  ['-e KEY=VAL',     'Environment variable. Cách truyền config vào container (12-factor app)'],
+                  ['--restart',      'Policy: no / on-failure / always / unless-stopped. Nên dùng unless-stopped'],
+                  ['--network',      'Đặt container vào custom bridge network. Cô lập với container khác'],
+                  ['--read-only',    'Filesystem read-only ngăn malicious code ghi vào image layer'],
+                ].map(([flag, desc]) => html`
+                  <div class="annotation">
+                    <span class="ann-key mono">${flag}</span>
+                    <span>${desc}</span>
+                  </div>
+                `)}
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      customElements.define('app-shell', AppShell);
+    </script>
+  </body>
+</html>

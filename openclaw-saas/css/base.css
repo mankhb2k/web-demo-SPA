@@ -1,0 +1,30 @@
+/* ═══════════════════════════════════════════
+   base.css — Reset, body, scrollbar, animations
+   (Global scope — outside shadow DOM)
+═══════════════════════════════════════════ */
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: #070e1a;
+  color: #e2e8f0;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar         { width: 5px; height: 5px; }
+::-webkit-scrollbar-track   { background: transparent; }
+::-webkit-scrollbar-thumb   { background: #1e3050; border-radius: 99px; }
+
+/* ── Keyframes (global) ── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes ping  { 75%,100%{transform:scale(2.2);opacity:0} }
+@keyframes slide { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── Utility classes ── */
+.mono { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; }
