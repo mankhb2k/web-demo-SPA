@@ -6,8 +6,7 @@
  * Phát events: add-instance, toggle-instance, remove-instance,
  *              remove-user, set-cmd-user  (all bubble + composed)
  */
-import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
-import { sharedStyles } from '../styles/shared.js';
+import { LitElement, html, nothing } from 'https://esm.sh/lit@3';
 import { PLATFORM_EMOJI, dispatch } from '../helpers.js';
 
 class TabDashboard extends LitElement {
@@ -16,110 +15,8 @@ class TabDashboard extends LitElement {
     cmdUser: { type: String },
   };
 
-  static styles = [sharedStyles, css`
-    :host { display: block; }
+  createRenderRoot() { return this; }
 
-    /* ── Empty state ── */
-    .empty-state {
-      border: 2px dashed #1a2d46; border-radius: 16px;
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 3rem 1rem; gap: .5rem;
-      color: #334155; text-align: center;
-    }
-    .empty-icon { font-size: 3rem; opacity: .35; }
-
-    /* ── User card ── */
-    .user-card {
-      background: #0f1f38; border: 1px solid #1a2d46;
-      border-radius: 14px; margin-bottom: 1.25rem; overflow: hidden;
-      transition: border-color .2s;
-    }
-    .user-card:hover { border-color: #2d4f8a; }
-    .user-head {
-      padding: .85rem 1rem; display: flex; align-items: center;
-      gap: .75rem; border-bottom: 1px solid #1a2d46;
-    }
-    .user-avatar {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: linear-gradient(135deg, #1e3a8a, #4f46e5);
-      display: flex; align-items: center; justify-content: center;
-      font-size: .8rem; font-weight: 800; flex-shrink: 0;
-    }
-    .user-id   { font-size: .85rem; font-weight: 700; font-family: 'Cascadia Code','Fira Code',monospace; }
-    .user-meta { font-size: .68rem; color: #475569; }
-    .head-actions { margin-left: auto; display: flex; gap: .4rem; align-items: center; }
-
-    /* ── Instances grid ── */
-    .instances-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
-      gap: .75rem; padding: .85rem;
-    }
-    .instance-card {
-      background: #0a1428; border: 1px solid #1a2d46;
-      border-radius: 10px; padding: .75rem; position: relative;
-      transition: border-color .2s;
-    }
-    .instance-card:hover   { border-color: #2d4a7a; }
-    .instance-card.running { border-color: #1a3d5c; }
-
-    /* status dot */
-    .dot-wrap { position: absolute; top: .6rem; right: .6rem; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; position: relative; display: inline-block; }
-    .dot.running  { background: #4ade80; }
-    .dot.stopped  { background: #374151; }
-    .dot.prov     { background: #60a5fa; }
-    .dot.running::before {
-      content: ''; position: absolute; inset: 0; border-radius: 50%;
-      background: #4ade80; animation: ping 1.2s ease-out infinite;
-    }
-
-    .ins-platform { font-size: 1.1rem; margin-bottom: .35rem; }
-    .ins-id {
-      font-size: .67rem; color: #475569; font-family: 'Cascadia Code','Fira Code',monospace;
-      margin-bottom: .6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .ins-badge { display: inline-block; padding: .1rem .45rem; border-radius: 5px; font-size: .62rem; font-weight: 700; text-transform: uppercase; }
-    .badge-running { background: #052e16; color: #4ade80; }
-    .badge-stopped { background: #111827; color: #4b5563; }
-    .badge-prov    { background: #0c1d40; color: #60a5fa; }
-
-    .ins-mem-bar  { height: 3px; background: #1a2d46; border-radius: 99px; margin: .5rem 0; overflow: hidden; }
-    .ins-mem-fill { height: 100%; background: #2563eb; border-radius: 99px; transition: width .5s ease; }
-    .ins-vol  {
-      font-size: .67rem; color: #334155; font-family: 'Cascadia Code','Fira Code',monospace;
-      background: #060d1a; border-radius: 5px; padding: .15rem .4rem;
-      margin-top: .4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .ins-meta { font-size: .67rem; color: #374151; margin-top: .3rem; }
-    .ins-actions { display: flex; gap: .3rem; margin-top: .6rem; }
-    .btn-icon {
-      padding: .3rem .5rem; border-radius: 6px; border: none;
-      background: #0f1f38; color: #4b5563; cursor: pointer;
-      transition: all .15s; font-size: .75rem; font-family: inherit;
-    }
-    .btn-icon.sleep:hover { background: #1a2d46; color: #fbbf24; }
-    .btn-icon.wake:hover  { background: #1a2d46; color: #34d399; }
-    .btn-icon.del:hover   { background: #451a1a; color: #f87171; }
-    .btn-icon:disabled    { opacity: .4; cursor: not-allowed; }
-
-    /* ── Docker run command box ── */
-    .cmd-header { margin-top: 1.5rem; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .5rem; }
-    .cmd-select {
-      margin-left: auto; background: #0f1f38; border: 1px solid #1a2d46;
-      color: #94a3b8; border-radius: 6px; padding: .25rem .5rem;
-      font-size: .75rem; cursor: pointer;
-    }
-    .cmd-box {
-      background: #040a14; border: 1px solid #1a2d46; border-radius: 10px;
-      padding: .85rem 1rem; font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
-      font-size: .75rem; line-height: 1.8; overflow-x: auto; white-space: pre;
-    }
-    .c0 { color: #64748b; }  /* comment  */
-    .c1 { color: #60a5fa; }  /* flags    */
-    .c2 { color: #fbbf24; }  /* volumes  */
-    .c3 { color: #34d399; }  /* env vars */
-    .c4 { color: #c084fc; }  /* image    */
-  `];
 
   constructor() {
     super();
@@ -136,11 +33,14 @@ class TabDashboard extends LitElement {
 
     return html`
       <div class="anim-slide">
-        <div class="section-title"><span>🖥</span> Quản lý Container theo User</div>
+        <div class="section-title">
+          <iconify-icon icon="lucide:monitor" style="margin-right: .5rem; color: #60a5fa;"></iconify-icon>
+          Quản lý Container theo User
+        </div>
 
         ${this.users.length === 0 ? html`
           <div class="empty-state">
-            <div class="empty-icon">📦</div>
+            <iconify-icon icon="lucide:box-select" class="empty-icon"></iconify-icon>
             <div style="font-weight:700;color:#334155">Chưa có container nào</div>
             <div style="font-size:.8rem;color:#1e3050">Nhấn "Đăng ký User mới" ở sidebar để bắt đầu</div>
           </div>
@@ -157,15 +57,28 @@ class TabDashboard extends LitElement {
         <div class="user-head">
           <div class="user-avatar">${user.id.slice(4, 6).toUpperCase()}</div>
           <div>
-            <div class="user-id">${user.id}</div>
+            <div class="user-id" style="display:flex;align-items:center;gap:.4rem; color: #fafafa">
+              ${user.id}
+              <span style="font-size:.6rem; background:#27272a; color:#fafafa; border:1px solid #3f3f46; padding:.1rem .3rem; border-radius:4px; font-weight:600; text-transform:uppercase;">${user.tier || 'Free'}</span>
+            </div>
             <div class="user-meta">Khởi tạo lúc ${user.createdAt} · ${user.instances.length} container(s)</div>
           </div>
           <div class="head-actions">
-            <button class="btn-ghost" @click=${() => this._dispatch('add-instance', { userId: user.id })}>
-              ＋ Thêm Bot
-            </button>
+            ${(user.tier === 'Free' || !user.tier) && user.instances.length >= 2 ? html`
+              <button class="btn-ghost" disabled title="Free tier giới hạn giới hạn tối đa 2 containers!" style="opacity:0.5;cursor:not-allowed">
+                <iconify-icon icon="lucide:lock" style="margin-right: .3rem;"></iconify-icon>
+                Limit 2/2
+              </button>
+            ` : html`
+              <button class="btn-ghost" @click=${() => this._dispatch('add-instance', { userId: user.id })}>
+                <iconify-icon icon="lucide:plus-circle" style="margin-right: .3rem;"></iconify-icon>
+                Thêm Bot
+              </button>
+            `}
             <button class="btn-danger" title="Xóa user & volume"
-              @click=${() => this._dispatch('remove-user', { userId: user.id })}>🗑</button>
+              @click=${() => this._dispatch('remove-user', { userId: user.id })}>
+              <iconify-icon icon="lucide:trash-2"></iconify-icon>
+            </button>
           </div>
         </div>
         <div class="instances-grid">
@@ -195,14 +108,19 @@ class TabDashboard extends LitElement {
         <div class="ins-meta">${ins.type} · ${ins.memory}MB / 256MB · CPU: ${ins.cpu}%</div>
         <div class="ins-vol">/data/users/${userId}/</div>
         <div class="ins-actions">
-          <button
-            class="btn-icon ${running ? 'sleep' : 'wake'}"
-            title="${running ? 'Sleep (tiết kiệm RAM)' : 'Wake up'}"
-            ?disabled=${prov}
-            @click=${() => this._dispatch('toggle-instance', { userId, insId: ins.id })}
-          >${running ? '😴 Sleep' : '⚡ Wake'}</button>
-          <button class="btn-icon del" title="Xóa container"
-            @click=${() => this._dispatch('remove-instance', { userId, insId: ins.id })}>🗑</button>
+            <button
+              class="btn-icon ${running ? 'sleep' : 'wake'}"
+              title="${running ? 'Sleep (tiết kiệm RAM)' : 'Wake up'}"
+              ?disabled=${prov}
+              @click=${() => this._dispatch('toggle-instance', { userId, insId: ins.id })}
+            >
+              <iconify-icon icon="lucide:${running ? 'moon' : 'zap'}" style="margin-right: .3rem;"></iconify-icon>
+              ${running ? 'Sleep' : 'Wake'}
+            </button>
+            <button class="btn-icon del" title="Xóa container"
+              @click=${() => this._dispatch('remove-instance', { userId, insId: ins.id })}>
+              <iconify-icon icon="lucide:trash-2"></iconify-icon>
+            </button>
         </div>
       </div>
     `;
@@ -213,7 +131,8 @@ class TabDashboard extends LitElement {
     return html`
       <div class="cmd-header">
         <div class="section-title" style="margin:0;font-size:.9rem">
-          <span>💻</span> docker run — <span style="font-family:monospace;color:#60a5fa">${user.id}</span>
+          <iconify-icon icon="lucide:terminal" style="margin-right: .5rem; color: #a78bfa;"></iconify-icon>
+          docker run — <span style="font-family:monospace;color:#60a5fa">${user.id}</span>
         </div>
         ${this.users.length > 1 ? html`
           <select class="cmd-select"

@@ -1,0 +1,75 @@
+/* tab-database.css */
+tab-database { display: block; }
+tab-database iconify-icon { vertical-align: middle; flex-shrink: 0; }
+
+/* ── ERD Diagram ── */
+.erd-container {
+  display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;
+  justify-content: center; align-items: flex-start;
+}
+
+.table-box {
+  background: #000000; border: 1px solid #27272a; border-radius: 8px;
+  width: 280px; overflow: hidden; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+}
+
+.table-header {
+  background: #09090b; padding: .65rem .85rem; font-weight: 600; font-size: .85rem;
+  color: #fafafa; display: flex; align-items: center; gap: .5rem;
+  border-bottom: 1px solid #27272a;
+}
+.table-header.auth { border-bottom-color: #27272a; }
+.table-header.core { border-bottom-color: #27272a; }
+
+.table-row {
+  display: flex; justify-content: space-between; padding: .5rem .85rem;
+  font-size: .75rem; border-bottom: 1px solid #27272a;
+}
+.table-row:last-child { border-bottom: none; }
+
+.col-name { font-weight: 500; color: #a1a1aa; font-family: 'Cascadia Code','Fira Code',monospace; }
+.col-name .pk { color: #fafafa; margin-right: .3rem; font-size: .7rem; }
+.col-name .fk { color: #a1a1aa; margin-right: .3rem; font-size: .7rem; }
+.col-type { color: #71717a; font-size: .7rem; }
+
+/* ── Live DB Table ── */
+.db-pane {
+  background: #000000; border: 1px solid #27272a; border-radius: 8px;
+  overflow: hidden; margin-bottom: 2rem;
+}
+.db-header {
+  background: #09090b; padding: .65rem 1rem; border-bottom: 1px solid #27272a;
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; color: #fafafa; font-size: .85rem;
+}
+.db-table-wrapper { overflow-x: auto; }
+.db-table {
+  width: 100%; border-collapse: collapse; font-family: 'Cascadia Code','Fira Code',monospace;
+  font-size: .7rem; text-align: left;
+}
+.db-table th {
+  padding: .6rem 1rem; background: #09090b; color: #a1a1aa; font-weight: 600; 
+  text-transform: lowercase; border-bottom: 1px solid #27272a;
+}
+.db-table td {
+  padding: .6rem 1rem; color: #a1a1aa; border-bottom: 1px solid #27272a;
+  white-space: nowrap;
+}
+.db-table tr:hover { background: #09090b; }
+.db-table tr:last-child td { border-bottom: none; }
+.mock-hash { color: #71717a; overflow: hidden; text-overflow: ellipsis; max-width: 120px; display: inline-block; vertical-align: bottom; }
+.db-badge {
+  padding: .15rem .35rem; background: #27272a; color: #fafafa; font-size: .6rem; border: 1px solid #3f3f46;
+  border-radius: 4px; text-transform: uppercase; font-family: sans-serif; font-weight: 600;
+}
+
+/* ── Auth Flow ── */
+.auth-flow {
+  background: #000000; border: 1px solid #27272a; border-radius: 8px;
+  padding: 1.25rem; font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+  font-size: .75rem; line-height: 1.8; color: #a1a1aa; overflow-x: auto;
+}
+.auth-flow .h-str { color: #34d399; }
+.auth-flow .h-key { color: #60a5fa; }
+.auth-flow .h-cmt { color: #475569; }
+.auth-flow .h-obj { color: #c084fc; }

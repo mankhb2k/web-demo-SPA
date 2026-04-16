@@ -1,0 +1,51 @@
+/* tab-docker101.css */
+tab-docker101 { display: block; }
+tab-docker101 iconify-icon { vertical-align: middle; flex-shrink: 0; }
+
+/* ── Concept cards grid ── */
+.concept-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+  gap: 1rem; margin-bottom: 1.5rem;
+}
+.concept-card {
+  background: #0f1f38; border: 1px solid #1a2d46; border-radius: 14px; padding: 1.1rem;
+}
+.concept-icon  { font-size: 2rem; margin-bottom: .5rem; }
+.concept-title { font-size: .9rem; font-weight: 800; color: #e2e8f0; margin-bottom: .4rem; }
+.concept-body  { font-size: .77rem; color: #94a3b8; line-height: 1.65; }
+.concept-body strong { color: #7dd3fc; }
+.concept-mono {
+  font-family: 'Cascadia Code','Fira Code',monospace;
+  background: #060d1a; padding: .2rem .4rem; border-radius: 4px;
+  font-size: .72em; color: #c084fc; display: inline-block; margin-top: .25rem;
+}
+
+/* ── Docker run annotated breakdown ── */
+.cmd-builder {
+  background: #040a14; border: 1px solid #1a2d46; border-radius: 12px; padding: 1rem;
+}
+.cmd-builder-title {
+  font-size: .75rem; font-weight: 700; color: #60a5fa;
+  margin-bottom: .6rem; display: flex; align-items: center; gap: .4rem;
+}
+.cmd-line {
+  font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+  font-size: .73rem; line-height: 1.9; white-space: pre;
+  overflow-x: auto; display: block;
+}
+
+/* code colors */
+.cmd-line .c-gray   { color: #334155; }
+.cmd-line .c-blue   { color: #60a5fa; }
+.cmd-line .c-yellow { color: #fbbf24; }
+.cmd-line .c-green  { color: #34d399; }
+.cmd-line .c-purple { color: #c084fc; }
+.cmd-line .c-white  { color: #f1f5f9; }
+
+/* ── Flag annotations ── */
+.annotations { display: flex; flex-direction: column; gap: .35rem; margin-top: .85rem; }
+.ann { display: flex; gap: .5rem; font-size: .68rem; color: #475569; }
+.ann-key {
+  color: #60a5fa; font-weight: 700; min-width: 110px; flex-shrink: 0;
+  font-family: 'Cascadia Code','Fira Code',monospace;
+}

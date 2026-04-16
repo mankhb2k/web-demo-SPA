@@ -24,58 +24,60 @@ export const sharedStyles = css`
 
   /* ── Section heading ── */
   .section-title {
-    font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem;
-    display: flex; align-items: center; gap: .5rem; color: #f1f5f9;
+    font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;
+    display: flex; align-items: center; gap: .5rem; color: #ffffff;
+    letter-spacing: -0.025em;
   }
 
   /* ── Panel (card container) ── */
   .panel {
-    background: #0f1f38; border: 1px solid #1a2d46;
-    border-radius: 12px; padding: 1rem;
+    background: #0d0d0d; border: 1px solid #777780ff;
+    border-radius: 8px; padding: 1.25rem;
   }
   .panel-title {
-    font-size: .65rem; font-weight: 800; text-transform: uppercase;
-    letter-spacing: .1em; color: #475569; margin-bottom: .75rem;
+    font-size: 0.875rem; font-weight: 600; 
+    color: #ffffff; margin-bottom: 1rem;
     display: flex; align-items: center; gap: .4rem;
+    letter-spacing: -0.025em;
   }
 
   /* ── Buttons ── */
   .btn-primary {
-    width: 100%; padding: .65rem; border-radius: 10px; border: none;
-    background: linear-gradient(135deg, #1d4ed8, #6366f1);
-    color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
-    transition: all .15s; font-family: inherit;
-    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    width: 100%; padding: .5rem 1rem; border-radius: 99px; border: none;
+    background: #ffffff;
+    color: #000000; font-weight: 600; font-size: 0.875rem; cursor: pointer;
+    transition: all .2s; font-family: inherit;
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
   }
-  .btn-primary:hover  { filter: brightness(1.15); transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); filter: brightness(.95); }
+  .btn-primary:hover  { background: #f4f4f5; transform: scale(0.98); }
+  .btn-primary:active { transform: scale(0.96); }
 
   .btn-ghost {
-    padding: .35rem .7rem; border-radius: 7px;
-    border: 1px solid #1a2d46; background: transparent; color: #60a5fa;
-    font-size: .72rem; font-weight: 700; cursor: pointer; transition: all .15s;
-    font-family: inherit; display: flex; align-items: center; gap: .35rem;
+    padding: .35rem .8rem; border-radius: 99px;
+    border: 1px solid #27272a; background: transparent; color: #a1a1aa;
+    font-size: .75rem; font-weight: 500; cursor: pointer; transition: all .2s;
+    font-family: inherit; display: inline-flex; align-items: center; gap: .35rem;
   }
-  .btn-ghost:hover { background: #1a2d46; }
+  .btn-ghost:hover { background: #27272a; color: #ffffff; }
 
   .btn-danger {
     padding: .3rem .55rem; border-radius: 6px; border: none;
-    background: transparent; color: #4b5563; cursor: pointer;
+    background: transparent; color: #a1a1aa; cursor: pointer;
     transition: all .15s; font-size: .75rem; font-family: inherit;
   }
-  .btn-danger:hover { background: #451a1a; color: #f87171; }
+  .btn-danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
   /* ── Info cards (used in storage + compare) ── */
   .info-card {
-    background: #0f1f38; border: 1px solid #1a2d46; border-radius: 10px; padding: .85rem;
-    display: flex; gap: .65rem; align-items: flex-start; margin-bottom: .6rem;
+    background: #0d0d0d; border: 1px solid #1c1c1f; border-radius: 8px; padding: 1rem;
+    display: flex; gap: .75rem; align-items: flex-start; margin-bottom: .75rem;
   }
-  .info-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .05rem; }
-  .info-body { font-size: .78rem; line-height: 1.6; color: #94a3b8; }
-  .info-body strong { color: #e2e8f0; }
-  .info-blue  { border-color: #1d4ed8; background: #0c1d40; }
-  .info-amber { border-color: #d97706; background: #1c1200; }
-  .info-green { border-color: #16a34a; background: #052e16; }
+  .info-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .1rem; }
+  .info-body { font-size: .875rem; line-height: 1.5; color: #a1a1aa; }
+  .info-body strong { color: #ffffff; font-weight: 600; }
+  .info-blue  { border-left: 3px solid #3b82f6; }
+  .info-amber { border-left: 3px solid #f59e0b; }
+  .info-green { border-left: 3px solid #22c55e; }
 
   /* ── Pro/con list (compare tab) ── */
   .pro-con { font-size: .75rem; line-height: 1.7; }
@@ -94,7 +96,7 @@ export const sharedStyles = css`
   /* ── Flow visual (architecture + docker101) ── */
   .flow-visual {
     display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
-    background: #060d1a; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+    background: #000000; border: 1px solid #18181b; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem;
   }
   .flow-box {
     padding: .5rem .9rem; border-radius: 8px; font-size: .78rem; font-weight: 700;

@@ -8,10 +8,11 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: #070e1a;
-  color: #e2e8f0;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  min-height: 100vh;
+  background: #000000;
+  color: #fafafa;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  height: 100vh;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 

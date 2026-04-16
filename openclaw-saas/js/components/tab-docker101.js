@@ -3,65 +3,15 @@
  * Tab 5: Docker 101 — khái niệm cốt lõi + giải thích docker run flags.
  * Static content — không cần props.
  */
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
-import { sharedStyles } from '../styles/shared.js';
+import { LitElement, html } from 'https://esm.sh/lit@3';
 
 class TabDocker101 extends LitElement {
-  static styles = [sharedStyles, css`
-    :host { display: block; }
+  createRenderRoot() { return this; }
 
-    /* ── Concept cards grid ── */
-    .concept-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
-      gap: 1rem; margin-bottom: 1.5rem;
-    }
-    .concept-card {
-      background: #0f1f38; border: 1px solid #1a2d46; border-radius: 14px; padding: 1.1rem;
-    }
-    .concept-icon  { font-size: 2rem; margin-bottom: .5rem; }
-    .concept-title { font-size: .9rem; font-weight: 800; color: #e2e8f0; margin-bottom: .4rem; }
-    .concept-body  { font-size: .77rem; color: #94a3b8; line-height: 1.65; }
-    .concept-body strong { color: #7dd3fc; }
-    .concept-mono {
-      font-family: 'Cascadia Code','Fira Code',monospace;
-      background: #060d1a; padding: .2rem .4rem; border-radius: 4px;
-      font-size: .72em; color: #c084fc; display: inline-block; margin-top: .25rem;
-    }
-
-    /* ── Docker run annotated breakdown ── */
-    .cmd-builder {
-      background: #040a14; border: 1px solid #1a2d46; border-radius: 12px; padding: 1rem;
-    }
-    .cmd-builder-title {
-      font-size: .75rem; font-weight: 700; color: #60a5fa;
-      margin-bottom: .6rem; display: flex; align-items: center; gap: .4rem;
-    }
-    .cmd-line {
-      font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
-      font-size: .73rem; line-height: 1.9; white-space: pre;
-      overflow-x: auto; display: block;
-    }
-
-    /* code colors */
-    .c-gray   { color: #334155; }
-    .c-blue   { color: #60a5fa; }
-    .c-yellow { color: #fbbf24; }
-    .c-green  { color: #34d399; }
-    .c-purple { color: #c084fc; }
-    .c-white  { color: #f1f5f9; }
-
-    /* ── Flag annotations ── */
-    .annotations { display: flex; flex-direction: column; gap: .35rem; margin-top: .85rem; }
-    .ann { display: flex; gap: .5rem; font-size: .68rem; color: #475569; }
-    .ann-key {
-      color: #60a5fa; font-weight: 700; min-width: 110px; flex-shrink: 0;
-      font-family: 'Cascadia Code','Fira Code',monospace;
-    }
-  `];
 
   static _CONCEPTS = [
     {
-      icon: '📦', title: 'Docker Image', border: '#1d4ed850',
+      icon: 'package', title: 'Docker Image', border: '#1d4ed850',
       body: html`
         Giống như file <strong>.ISO</strong> — bản thiết kế blueprint.
         Chứa code, runtime, dependencies. Image là <strong>Read-only</strong> —
@@ -71,7 +21,7 @@ class TabDocker101 extends LitElement {
       `,
     },
     {
-      icon: '🚀', title: 'Docker Container', border: '#16a34a50',
+      icon: 'rocket', title: 'Docker Container', border: '#16a34a50',
       body: html`
         "Chạy" Image → tạo Container — <strong>instance</strong> thực đang hoạt động.
         Mỗi container có writable layer riêng trên image (copy-on-write).<br><br>
@@ -80,7 +30,7 @@ class TabDocker101 extends LitElement {
       `,
     },
     {
-      icon: '💾', title: 'Volume (Lưu trữ)', border: '#d9770650',
+      icon: 'database', title: 'Volume (Lưu trữ)', border: '#d9770650',
       body: html`
         Data trong container là <strong>ephemeral</strong> — xóa container = mất data.
         Volume mount thư mục Host vào container, data tồn tại độc lập với lifecycle.<br><br>
@@ -88,7 +38,7 @@ class TabDocker101 extends LitElement {
       `,
     },
     {
-      icon: '🔒', title: 'Network Isolation', border: '#7c3aed50',
+      icon: 'network', title: 'Network Isolation', border: '#7c3aed50',
       body: html`
         Mỗi container chạy trong <strong>bridge network</strong> riêng. Container
         không nói chuyện với nhau trừ khi được phép. Port chỉ expose về localhost —
@@ -97,7 +47,7 @@ class TabDocker101 extends LitElement {
       `,
     },
     {
-      icon: '⚙', title: 'Resource Limits', border: '#0891b250',
+      icon: 'settings-2', title: 'Resource Limits', border: '#0891b250',
       body: html`
         Giới hạn CPU/RAM tránh <strong>noisy-neighbor</strong>:
         1 user không chiếm hết tài nguyên server, không làm chậm user khác.<br><br>
@@ -106,7 +56,7 @@ class TabDocker101 extends LitElement {
       `,
     },
     {
-      icon: '🔄', title: 'Sleep / Wake Pattern', border: '#dc262650',
+      icon: 'refresh-cw', title: 'Sleep / Wake Pattern', border: '#dc262650',
       body: html`
         Free tier dừng container sau idle. Volume giữ toàn bộ data.
         Khi user quay lại, container start lại trong vài giây,
@@ -132,7 +82,10 @@ class TabDocker101 extends LitElement {
   render() {
     return html`
       <div class="anim-slide">
-        <div class="section-title"><span>🐳</span> Docker 101 — Kiến thức cốt lõi</div>
+        <div class="section-title">
+          <iconify-icon icon="logos:docker-icon" style="margin-right: .6rem; font-size: 1.2rem;"></iconify-icon>
+          Docker 101 — Kiến thức cốt lõi
+        </div>
 
         <!-- Dockerfile → Image → Container flow -->
         <div class="flow-visual">
@@ -140,20 +93,22 @@ class TabDocker101 extends LitElement {
           <div class="flow-arrow">→</div>
           <div class="flow-box fb-cmd">docker build</div>
           <div class="flow-arrow">→</div>
-          <div class="flow-box fb-img">📦 Image<div style="font-size:.62rem;opacity:.6">Read-only</div></div>
+          <div class="flow-box fb-img"><iconify-icon icon="lucide:package" style="margin-bottom:.2rem"></iconify-icon> Image<div style="font-size:.62rem;opacity:.6">Read-only</div></div>
           <div class="flow-arrow">→</div>
           <div class="flow-box fb-cmd">docker run</div>
           <div class="flow-arrow">→</div>
-          <div class="flow-box fb-ctr">📦 Container<div style="font-size:.62rem;opacity:.6">Running</div></div>
+          <div class="flow-box fb-ctr"><iconify-icon icon="lucide:box" style="margin-bottom:.2rem"></iconify-icon> Container<div style="font-size:.62rem;opacity:.6">Running</div></div>
           <div class="flow-arrow">×N</div>
-          <div class="flow-box fb-ctr" style="opacity:.5">📦 Container<div style="font-size:.62rem;opacity:.6">More instances</div></div>
+          <div class="flow-box fb-ctr" style="opacity:.5"><iconify-icon icon="lucide:box" style="margin-bottom:.2rem"></iconify-icon> Container<div style="font-size:.62rem;opacity:.6">More instances</div></div>
         </div>
 
         <!-- Concept cards -->
         <div class="concept-grid">
           ${TabDocker101._CONCEPTS.map(c => html`
             <div class="concept-card" style="border-color:${c.border}">
-              <div class="concept-icon">${c.icon}</div>
+              <div class="concept-icon">
+                <iconify-icon icon="lucide:${c.icon}"></iconify-icon>
+              </div>
               <div class="concept-title">${c.title}</div>
               <div class="concept-body">${c.body}</div>
             </div>
@@ -162,10 +117,14 @@ class TabDocker101 extends LitElement {
 
         <!-- Docker run annotated -->
         <div class="section-title" style="font-size:.9rem">
-          <span>🔍</span> Giải thích từng flag trong lệnh docker run
+          <iconify-icon icon="lucide:search" style="margin-right: .5rem; color: #60a5fa;"></iconify-icon>
+          Giải thích từng flag trong lệnh docker run
         </div>
         <div class="cmd-builder">
-          <div class="cmd-builder-title"><span>💻</span> Lệnh thực tế OpenClaw SaaS dùng</div>
+          <div class="cmd-builder-title">
+            <iconify-icon icon="lucide:terminal" style="margin-right: .4rem;"></iconify-icon>
+            Lệnh thực tế OpenClaw SaaS dùng
+          </div>
           <code class="cmd-line"
 ><span class="c-blue">docker run</span> <span class="c-blue">-d</span>                           <span class="c-gray"># detached mode (chạy nền)</span>
   <span class="c-blue">--name</span>      <span class="c-white">openclaw-usr_abc1</span>          <span class="c-gray"># tên container duy nhất per user</span>

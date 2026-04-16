@@ -7,12 +7,13 @@
  * Giao tiếp với tabs qua custom events (bubbles + composed):
  *   register-user, add-instance, toggle-instance, remove-instance, remove-user, set-cmd-user
  */
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { LitElement, html } from 'https://esm.sh/lit@3';
 import { uid, now, clamp, TABS } from '../helpers.js';
 
 /* Import tất cả tab components để đăng ký custom elements */
 import './tab-dashboard.js';
 import './tab-architecture.js';
+import './tab-database.js';
 import './tab-storage.js';
 import './tab-compare.js';
 import './tab-docker101.js';
@@ -25,94 +26,8 @@ class AppShell extends LitElement {
     _cmdUser: { state: true },
   };
 
-  static styles = css`
-    :host { display: block; }
+  createRenderRoot() { return this; }
 
-    /* ── App layout ── */
-    .app    { min-height: 100vh; display: flex; flex-direction: column; }
-    .body   { display: grid; grid-template-columns: 280px 1fr; flex: 1; min-height: 0; }
-    @media (max-width: 840px) { .body { grid-template-columns: 1fr; } }
-
-    /* ── Header ── */
-    .header {
-      background: #0b1628; border-bottom: 1px solid #1a2d46;
-      padding: .75rem 1.5rem; display: flex; align-items: center;
-      gap: 1rem; flex-wrap: wrap; position: sticky; top: 0; z-index: 10;
-    }
-    .logo-wrap { display: flex; align-items: center; gap: .6rem; }
-    .logo-text {
-      font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em;
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .logo-sub { font-size: .7rem; color: #475569; margin-top: -.1rem; }
-
-    /* Tab nav */
-    .tabs { display: flex; gap: .25rem; flex-wrap: wrap; margin-left: auto; }
-    .tab-btn {
-      padding: .4rem .85rem; border-radius: 8px; border: none;
-      background: transparent; color: #64748b; cursor: pointer;
-      font-size: .8rem; font-weight: 600; transition: all .15s; font-family: inherit;
-    }
-    .tab-btn:hover  { background: #1a2d46; color: #94a3b8; }
-    .tab-btn.active { background: #1d3a6e; color: #7dd3fc; }
-
-    /* ── Sidebar ── */
-    .sidebar {
-      background: #0b1628; border-right: 1px solid #1a2d46;
-      padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem;
-      overflow-y: auto;
-    }
-    .panel {
-      background: #0f1f38; border: 1px solid #1a2d46; border-radius: 12px; padding: 1rem;
-    }
-    .panel-title {
-      font-size: .65rem; font-weight: 800; text-transform: uppercase;
-      letter-spacing: .1em; color: #475569; margin-bottom: .75rem;
-      display: flex; align-items: center; gap: .4rem;
-    }
-
-    /* Resource bars */
-    .stat-row  { display: flex; justify-content: space-between; font-size: .75rem; margin-bottom: .3rem; }
-    .bar-track { background: #0c1a2e; border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: .75rem; }
-    .bar-fill  { height: 100%; border-radius: 99px; transition: width .6s ease; }
-    .bar-blue  { background: linear-gradient(90deg, #2563eb, #38bdf8); }
-    .bar-green { background: linear-gradient(90deg, #16a34a, #4ade80); }
-    .bar-red   { background: linear-gradient(90deg, #dc2626, #f87171); }
-
-    /* Metric tiles */
-    .metrics     { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .75rem; }
-    .metric      { background: #0c1a2e; border-radius: 8px; padding: .5rem .6rem; border: 1px solid #1a2d46; }
-    .metric-val  { font-size: 1.2rem; font-weight: 800; line-height: 1; }
-    .metric-name { font-size: .6rem; color: #475569; text-transform: uppercase; margin-top: .2rem; }
-
-    /* Add user button */
-    .btn-primary {
-      width: 100%; padding: .65rem; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #1d4ed8, #6366f1);
-      color: #fff; font-weight: 700; font-size: .85rem; cursor: pointer;
-      transition: all .15s; font-family: inherit;
-      display: flex; align-items: center; justify-content: center; gap: .4rem;
-    }
-    .btn-primary:hover  { filter: brightness(1.15); transform: translateY(-1px); }
-    .btn-primary:active { transform: translateY(0);  filter: brightness(.95); }
-
-    /* Image info */
-    .img-info { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: .72rem; line-height: 1.9; }
-
-    /* Event log */
-    .log-box {
-      background: #060d1a; border-radius: 8px; padding: .6rem;
-      height: 140px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: .25rem;
-    }
-    .log-entry { font-size: .68rem; font-family: 'Cascadia Code','Fira Code','Consolas',monospace; color: #475569; }
-    .log-entry.fresh { color: #60a5fa; }
-    .log-time  { opacity: .4; margin-right: .4rem; }
-
-    /* ── Main area ── */
-    .main { padding: 1.25rem; overflow-y: auto; }
-  `;
 
   constructor() {
     super();
@@ -138,7 +53,7 @@ class AppShell extends LitElement {
     const port  = 8000 + Math.floor(Math.random() * 1000);
     const insId = `${id}_bot_1`;
     this._users = [...this._users, {
-      id, createdAt: now(),
+      id, createdAt: now(), tier: 'Free',
       instances: [{ id: insId, type: 'Telegram', status: 'provisioning', memory: 0, cpu: 0, port }],
     }];
     this._log(`Provisioning [openclaw-${id}]... Image: openclaw-gateway:v2`);
@@ -154,6 +69,12 @@ class AppShell extends LitElement {
   _addInstance(userId) {
     const user = this._users.find(u => u.id === userId);
     if (!user) return;
+    
+    if (user.tier === 'Free' && user.instances.length >= 2) {
+      this._log(`[Cảnh báo] Free tier (User ${userId}) giới hạn tối đa 2 containers!`);
+      return;
+    }
+
     const PLATFORMS = ['Telegram','Zalo','WhatsApp','Discord','Slack','IRC','LINE'];
     const used  = user.instances.map(i => i.type);
     const type  = PLATFORMS.find(p => !used.includes(p)) ?? 'Bot';
@@ -215,9 +136,9 @@ class AppShell extends LitElement {
   render() {
     const ram    = this._totalRAM;
     const cpu    = this._totalCPU;
-    const ramPct = clamp((ram / 8192) * 100, 0, 100);
+    const ramPct = clamp((ram / 18432) * 100, 0, 100);
     const cpuPct = clamp(cpu, 0, 100);
-    const ramBar = ramPct > 75 ? 'bar-red' : 'bar-blue';
+    const ramBar = ramPct > 80 ? 'bar-red' : 'bar-blue';
 
     return html`
       <div class="app"
@@ -231,15 +152,7 @@ class AppShell extends LitElement {
         <!-- ── Header ── -->
         <header class="header">
           <div class="logo-wrap">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <rect width="28" height="28" rx="8" fill="#1d4ed8"/>
-              <rect x="5"    y="10" width="5" height="5" rx="1.5" fill="#60a5fa"/>
-              <rect x="11.5" y="10" width="5" height="5" rx="1.5" fill="#60a5fa"/>
-              <rect x="18"   y="10" width="5" height="5" rx="1.5" fill="#60a5fa"/>
-              <rect x="5"    y="17" width="5" height="5" rx="1.5" fill="#93c5fd"/>
-              <rect x="11.5" y="17" width="5" height="5" rx="1.5" fill="#93c5fd"/>
-              <path d="M20 14h5" stroke="#60a5fa" stroke-width="2" stroke-linecap="round"/>
-            </svg>
+            <iconify-icon icon="lucide:box" style="font-size: 1.8rem; color: #38bdf8;"></iconify-icon>
             <div>
               <div class="logo-text">OpenClaw SaaS</div>
               <div class="logo-sub">Docker Interactive Guide</div>
@@ -251,7 +164,10 @@ class AppShell extends LitElement {
               <button
                 class="tab-btn ${this._tab === t.id ? 'active' : ''}"
                 @click=${() => { this._tab = t.id; }}
-              >${t.label}</button>
+              >
+                <iconify-icon icon="lucide:${t.icon}" style="margin-right: .4rem; font-size: 1rem;"></iconify-icon>
+                ${t.label}
+              </button>
             `)}
           </nav>
         </header>
@@ -264,47 +180,54 @@ class AppShell extends LitElement {
 
             <!-- Server metrics + Add User -->
             <div class="panel">
-              <div class="panel-title"><span>⚙</span> Host Server (VPS)</div>
+              <div class="panel-title">
+                <iconify-icon icon="lucide:server" style="color: #60a5fa;"></iconify-icon>
+                Host Server (VPS)
+              </div>
               <div class="stat-row">
-                <span>RAM (${ram} MB / 8192 MB)</span>
-                <span style="color:${ramPct>75?'#f87171':'#60a5fa'}">${ramPct.toFixed(1)}%</span>
+                <span>RAM (${ram} MB / 18432 MB)</span>
+                <span style="color:${ramPct>80?'#ef4444':'#fafafa'}">${ramPct.toFixed(1)}%</span>
               </div>
               <div class="bar-track">
                 <div class="bar-fill ${ramBar}" style="width:${ramPct}%"></div>
               </div>
               <div class="stat-row">
-                <span>CPU Load</span>
-                <span style="color:#4ade80">${cpuPct}%</span>
+                <span>CPU Load (6 vCPU Cores)</span>
+                <span style="color:#10b981">${cpuPct}%</span>
               </div>
               <div class="bar-track">
                 <div class="bar-fill bar-green" style="width:${cpuPct}%"></div>
               </div>
               <div class="metrics">
                 <div class="metric">
-                  <div class="metric-val" style="color:#60a5fa">${this._totalContainers}</div>
+                  <div class="metric-val" style="color:#3b82f6">${this._totalContainers}</div>
                   <div class="metric-name">Containers</div>
                 </div>
                 <div class="metric">
-                  <div class="metric-val" style="color:#4ade80">${this._runningCtr}</div>
+                  <div class="metric-val" style="color:#22c55e">${this._runningCtr}</div>
                   <div class="metric-name">Running</div>
                 </div>
                 <div class="metric">
-                  <div class="metric-val" style="color:#a78bfa">${this._users.length}</div>
+                  <div class="metric-val" style="color:#a855f7">${this._users.length}</div>
                   <div class="metric-name">Users</div>
                 </div>
                 <div class="metric">
-                  <div class="metric-val" style="color:#fbbf24">${this._totalContainers - this._runningCtr}</div>
+                  <div class="metric-val" style="color:#eab308">${this._totalContainers - this._runningCtr}</div>
                   <div class="metric-name">Sleeping</div>
                 </div>
               </div>
-              <button class="btn-primary" @click=${this._registerUser}>
-                <span>＋</span> Đăng ký User mới
+              <button class="btn-create" @click=${this._registerUser}>
+                <iconify-icon icon="lucide:plus"></iconify-icon>
+                Quick Create
               </button>
             </div>
 
             <!-- Image info -->
             <div class="panel">
-              <div class="panel-title"><span>📦</span> Docker Image</div>
+              <div class="panel-title">
+                <iconify-icon icon="lucide:package-2" style="color: #c084fc;"></iconify-icon>
+                Docker Image
+              </div>
               <div class="img-info">
                 <div style="color:#c084fc">openclaw-gateway:v2</div>
                 <div style="color:#475569;padding-left:.8rem">BASE: node:20-alpine</div>
@@ -315,7 +238,10 @@ class AppShell extends LitElement {
 
             <!-- Event log -->
             <div class="panel" style="flex:1">
-              <div class="panel-title"><span>📋</span> Docker Events</div>
+              <div class="panel-title">
+                <iconify-icon icon="lucide:terminal" style="color: #475569;"></iconify-icon>
+                Docker Events
+              </div>
               <div class="log-box">
                 ${this._logs.map((l, i) => html`
                   <div class="log-entry ${i===0?'fresh':''}">
@@ -338,6 +264,10 @@ class AppShell extends LitElement {
 
             ${this._tab === 'architecture' ? html`
               <tab-architecture .users=${this._users}></tab-architecture>
+            ` : ''}
+
+            ${this._tab === 'database' ? html`
+              <tab-database .users=${this._users}></tab-database>
             ` : ''}
 
             ${this._tab === 'storage' ? html`

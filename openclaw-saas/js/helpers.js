@@ -23,11 +23,12 @@ export const PLATFORM_EMOJI = {
 
 /** Tab navigation config */
 export const TABS = [
-  { id: 'dashboard',    label: 'Bảng điều khiển' },
-  { id: 'architecture', label: 'Kiến trúc SaaS'  },
-  { id: 'storage',      label: 'Lưu trữ'         },
-  { id: 'compare',      label: 'So sánh'         },
-  { id: 'docker101',    label: 'Docker 101'      },
+  { id: 'dashboard',    label: 'Bảng điều khiển', icon: 'layout-dashboard' },
+  { id: 'architecture', label: 'Kiến trúc SaaS',  icon: 'network'          },
+  { id: 'database',     label: 'DB & Auth',       icon: 'server-cog'       },
+  { id: 'storage',      label: 'Lưu trữ',         icon: 'database'         },
+  { id: 'compare',      label: 'So sánh',         icon: 'diff'             },
+  { id: 'docker101',    label: 'Docker 101',      icon: 'ship'             },
 ];
 
 /** Provisioning steps data — dùng trong tab-architecture */
