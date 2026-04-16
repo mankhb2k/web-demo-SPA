@@ -1,121 +1,193 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
-  <head>
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Web Demo SPA</title>
-    <meta
-      name="description"
-      content="Mẫu trang tĩnh để deploy lên GitHub Pages"
-    />
-      <!-- Favicon: prefer SVG file (modern browsers) with /favicon.ico fallback -->
-      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-      <link rel="alternate icon" href="/favicon.ico" />
-    <!-- Favicon as inline SVG data URL -->
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2306b6d4'/%3E%3Ctext x='50' y='57' font-size='50' text-anchor='middle' font-family='system-ui,Segoe UI,Arial' fill='%23011413'%3EW%3C/text%3E%3C/svg%3E"
-    />
+    <title>OpenClaw SaaS — Modern Docker Strategy</title>
+    
+    <!-- OpenClaw CSS Links (Prepended with openclaw-saas/) -->
+    <link rel="stylesheet" href="openclaw-saas/css/base.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/components.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/app-shell.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/tab-dashboard.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/tab-architecture.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/tab-database.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/tab-storage.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/tab-compare.css" />
+    <link rel="stylesheet" href="openclaw-saas/css/tab-docker101.css" />
+
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+
     <style>
-      :root {
-        --bg: #0f1724;
-        --card: #111827;
-        --accent: #06b6d4;
-        --muted: #9ca3af;
-      }
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        font-family:
-          Inter,
-          Segoe UI,
-          system-ui,
-          Arial;
-      }
-      body {
-        display: grid;
-        place-items: center;
-        background: linear-gradient(180deg, #071023 0%, #0b1220 100%);
-        color: #e6eef8;
-      }
-      .card {
-        max-width: 760px;
-        padding: 32px;
-        border-radius: 12px;
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.02),
-          rgba(255, 255, 255, 0.01)
-        );
-        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
-      }
-      h1 {
-        margin: 0 0 8px 0;
-        font-size: 28px;
-      }
-      p {
-        margin: 0 0 16px 0;
-        color: var(--muted);
-      }
-      .actions a {
-        display: inline-block;
-        padding: 10px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        color: #072033;
-        background: var(--accent);
-        font-weight: 600;
-      }
-      footer {
-        margin-top: 18px;
-        font-size: 13px;
-        color: var(--muted);
-      }
-      pre {
-        background: #071627;
-        padding: 12px;
-        border-radius: 8px;
-        color: #a6f0ff;
-        overflow: auto;
-      }
+        /* Landing Page Specific Styles */
+        #landing-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #000000;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(24, 24, 27, 0.5) 0%, transparent 100%),
+                linear-gradient(rgba(24, 24, 27, 0.1) 1px, transparent 1px),
+                linear-gradient(90base, rgba(24, 24, 27, 0.1) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            color: #ffffff;
+            text-align: center;
+            padding: 2rem;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #landing-page::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, #000 70%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            letter-spacing: -0.06em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to bottom, #ffffff 30%, #52525b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: #a1a1aa;
+            max-width: 540px;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        .launch-btn {
+            background: #ffffff;
+            color: #000000;
+            padding: 1.1rem 3rem;
+            border-radius: 99px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .launch-btn:hover {
+            transform: translateY(-2px);
+            background: #ffffff;
+            box-shadow: 0 8px 30px rgba(255, 255, 255, 0.25);
+        }
+
+        .feature-dots {
+            display: flex;
+            gap: 3rem;
+            margin-top: 5rem;
+            opacity: 0.6;
+        }
+
+        .dot-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.85rem;
+            color: #fafafa;
+            font-weight: 500;
+        }
+
+        #app-root {
+            display: none;
+            animation: fadeInApp 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInApp {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Hidden Class */
+        .hidden { display: none !important; }
     </style>
-  </head>
-  <body>
-    <main class="card" role="main">
-      <h1>Web Demo SPA</h1>
-      <p>Mẫu trang tĩnh đơn giản đã sẵn sàng để deploy lên GitHub Pages.</p>
+</head>
+<body>
 
-      <section>
-        <p>
-          Thay nội dung trong file <strong>index.html</strong> bằng ứng dụng của
-          bạn (HTML, CSS, JS). Nếu bạn dùng một SPA framework, build ra thư mục
-          tĩnh rồi đặt file đầu ra tại đây.
-        </p>
-      </section>
+    <!-- Landing Page Session -->
+    <div id="landing-page">
+        <div class="hero-content">
+            <iconify-icon icon="lucide:box" style="font-size: 5rem; color: #ffffff; margin-bottom: 2.5rem;"></iconify-icon>
+            <h1 class="hero-title">OpenClaw SaaS</h1>
+            <p class="hero-subtitle">
+                Hệ thống quản trị hạ tầng Docker chuyên nghiệp với kiến trúc isolation tuyệt đối. 
+                Quản lý hàng ngàn container với hiệu năng và bảo mật tối ưu.
+            </p>
+            
+            <button id="launch-trigger" class="launch-btn">
+                Mở Dashboard Quản Trị
+                <iconify-icon icon="lucide:arrow-right" style="font-size:1.2rem"></iconify-icon>
+            </button>
 
-      <div class="actions" style="margin-top: 12px">
-        <a href="README.md">Xem README</a>
-        <a
-          href="docker.html"
-          style="margin-left: 12px; background: #0ea5a4; color: #fff"
-          >Xem Docker</a
-        >
-        <a
-          href="openclaw-saas/index.html"
-          style="margin-left: 12px; background: #1d4ed8; color: #fff"
-          >OpenClaw SaaS — Docker Guide</a
-        >
-      </div>
+            <div class="feature-dots">
+                <div class="dot-item"><iconify-icon icon="lucide:shield-check" style="color:#fafafa"></iconify-icon> Isolation</div>
+                <div class="dot-item"><iconify-icon icon="lucide:zap" style="color:#fafafa"></iconify-icon> Performance</div>
+                <div class="dot-item"><iconify-icon icon="lucide:database" style="color:#fafafa"></iconify-icon> Persistent</div>
+            </div>
+        </div>
+    </div>
 
-      <footer>
-        <div>Quick deploy commands:</div>
-        <pre>
-git add index.html
-git commit -m "Add index.html for GitHub Pages"
-git push origin main</pre
-        >
-      </footer>
-    </main>
-  </body>
+    <!-- App Shell (Initially Hidden) -->
+    <div id="app-root">
+        <app-shell></app-shell>
+    </div>
+
+    <!-- JS Logic -->
+    <script type="module">
+        import './openclaw-saas/js/components/app-shell.js';
+
+        const launchBtn = document.getElementById('launch-trigger');
+        const landingPage = document.getElementById('landing-page');
+        const appRoot = document.getElementById('app-root');
+
+        launchBtn.addEventListener('click', () => {
+            // Fade out effect
+            landingPage.style.opacity = '0';
+            setTimeout(() => {
+                landingPage.classList.add('hidden');
+                appRoot.style.display = 'block';
+                // Trigger any resize or update needed for the app
+                window.dispatchEvent(new Event('resize'));
+            }, 500);
+        });
+
+        // Check if URL hash is #dashboard to skip landing
+        if (window.location.hash === '#dashboard') {
+            landingPage.classList.add('hidden');
+            appRoot.style.display = 'block';
+        }
+    </script>
+</body>
 </html>
