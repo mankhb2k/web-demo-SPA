@@ -2,44 +2,123 @@
 tab-architecture { display: block; }
 tab-architecture iconify-icon { vertical-align: middle; flex-shrink: 0; }
 
-/* ── Architecture diagram ── */
-.arch-diagram {
-  display: flex; flex-direction: column; gap: .6rem;
-  align-items: center; margin-bottom: 1.75rem;
+/* ── Two-layer architecture ── */
+.two-layer-arch {
+  display: grid; grid-template-columns: 1fr 64px 1fr;
+  gap: 0; margin-bottom: 1.25rem; align-items: stretch;
 }
-.arch-row {
-  display: flex; gap: .75rem; align-items: center;
-  flex-wrap: wrap; justify-content: center;
+@media (max-width: 700px) {
+  .two-layer-arch { grid-template-columns: 1fr; }
+  .layer-arrow { flex-direction: row; justify-content: center; padding: .5rem 0; height: 48px; }
+  .arrow-line   { width: 40px; height: 2px; min-height: unset; }
 }
-.arch-box {
-  border-radius: 12px; padding: .75rem 1.1rem; text-align: center;
-  border: 1px solid; font-size: .8rem; font-weight: 700; min-width: 130px;
-}
-.arch-arrow { color: #1e3a5f; font-size: 1.4rem; }
-.arch-label { font-size: .65rem; font-weight: 400; opacity: .7; margin-top: .2rem; }
-.arch-blue   { background: #0c1d40; border-color: #1d4ed8; color: #7dd3fc; }
-.arch-amber  { background: #1c1200; border-color: #d97706; color: #fcd34d; }
-.arch-purple { background: #1e1040; border-color: #7c3aed; color: #c4b5fd; }
-.arch-cyan   { background: #042026; border-color: #0891b2; color: #67e8f9; }
-.arch-down   { color: #1e3a5f; font-size: 1.4rem; }
 
-/* ── Gateway pool ── */
-.gateway-pool {
-  background: #0c1a2e; border: 1px solid #1a2d46; border-radius: 14px;
-  padding: .85rem; display: flex; flex-wrap: wrap; gap: .5rem;
-  justify-content: center; max-width: 600px;
+/* Layer boxes */
+.layer-box {
+  border-radius: 14px; padding: 1.1rem;
+  border: 1px solid; display: flex; flex-direction: column; gap: .75rem;
 }
-.gw-instance {
-  background: #0f1f38; border: 1px solid #1a3a5c; border-radius: 8px;
-  padding: .4rem .7rem; font-size: .7rem; color: #60a5fa;
-  font-family: 'Cascadia Code','Fira Code',monospace;
-  display: flex; align-items: center; gap: .35rem;
+.layer-control {
+  background: linear-gradient(160deg, #0c0c2e 0%, #0e1040 100%);
+  border-color: #4338ca;
 }
-.gw-instance.ghost { color: #1e3050; border-color: #0f1f38; }
-.gw-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+.layer-data {
+  background: linear-gradient(160deg, #021c0f 0%, #052e16 100%);
+  border-color: #16a34a;
+}
 
-/* ── Provisioning flow steps ── */
-.flow-steps { display: flex; flex-direction: column; gap: .5rem; margin-top: 1.25rem; }
+/* Layer header */
+.layer-header {
+  display: flex; align-items: center; gap: .5rem;
+  font-size: .9rem; font-weight: 800; color: #f1f5f9;
+}
+.layer-badge {
+  margin-left: auto; padding: .1rem .5rem; border-radius: 5px;
+  font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+}
+.badge-railway { background: #1e1b4b; color: #818cf8; border: 1px solid #4338ca; }
+.badge-contabo { background: #052e16; color: #4ade80; border: 1px solid #16a34a; }
+
+/* Service pills */
+.layer-services { display: flex; flex-wrap: wrap; gap: .4rem; }
+.svc-pill {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .3rem .65rem; border-radius: 99px; font-size: .72rem; font-weight: 600;
+  border: 1px solid;
+}
+.svc-tag { font-size: .55rem; opacity: .7; font-weight: 700; text-transform: uppercase; margin-left: .15rem; }
+.svc-blue   { background: #0c1d40; border-color: #1d4ed8; color: #93c5fd; }
+.svc-purple { background: #1e1040; border-color: #7c3aed; color: #c4b5fd; }
+.svc-red    { background: #2d0808; border-color: #dc2626; color: #fca5a5; }
+.svc-amber  { background: #1c1200; border-color: #d97706; color: #fcd34d; }
+.svc-green  { background: #052e16; border-color: #16a34a; color: #4ade80; }
+.svc-cyan   { background: #042026; border-color: #0891b2; color: #67e8f9; }
+.svc-teal   { background: #042018; border-color: #0d9488; color: #2dd4bf; }
+
+/* Duties list */
+.layer-duties { display: flex; flex-direction: column; gap: .35rem; }
+.duty {
+  font-size: .77rem; color: #94a3b8;
+  display: flex; align-items: center; gap: .4rem;
+}
+
+/* Gateway pool preview */
+.gw-pool-mini {
+  display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .25rem;
+}
+.gw-mini-chip {
+  background: #0a1e30; border: 1px solid #1a3a5c; border-radius: 6px;
+  padding: .2rem .5rem; font-size: .65rem; color: #60a5fa;
+  font-family: 'Fira Code','Cascadia Code',monospace;
+  display: flex; align-items: center; gap: .3rem;
+}
+.gw-mini-chip.ghost { color: #1e3050; border-color: #0f1f38; }
+.gw-mini-dot { width: 5px; height: 5px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+
+/* Arrow connector */
+.layer-arrow {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .4rem; padding: 0 .5rem; width: 64px;
+}
+.arrow-line {
+  width: 2px; flex: 1;
+  background: linear-gradient(to bottom, #4338ca88, #16a34a88);
+  min-height: 30px;
+}
+.arrow-label {
+  font-size: .58rem; text-align: center; color: #475569;
+  font-family: 'Fira Code','Cascadia Code',monospace; line-height: 1.4; white-space: nowrap;
+  background: #0b1628; border: 1px solid #1a2d46; border-radius: 6px;
+  padding: .3rem .4rem; writing-mode: vertical-lr; text-orientation: mixed;
+  letter-spacing: .04em;
+}
+
+/* ── Capacity row ── */
+.capacity-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr));
+  gap: .6rem; margin-bottom: 1rem;
+}
+.cap-card {
+  background: #0f1f38; border: 1px solid #1a2d46; border-radius: 10px;
+  padding: .7rem .75rem; text-align: center;
+}
+.cap-val  { font-size: 1.25rem; font-weight: 800; line-height: 1; }
+.cap-name { font-size: .62rem; color: #475569; text-transform: uppercase; margin-top: .3rem; }
+
+/* ── VPS spec row ── */
+.vps-spec-row {
+  display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem;
+}
+.vps-spec {
+  display: flex; align-items: center; gap: .4rem;
+  background: #0a1428; border: 1px solid #1a2d46; border-radius: 8px;
+  padding: .45rem .8rem; font-size: .78rem; color: #94a3b8;
+  font-family: 'Fira Code','Cascadia Code',monospace;
+}
+.vps-spec strong { color: #e2e8f0; }
+
+/* ── Provisioning flow steps (reused from original) ── */
+.flow-steps { display: flex; flex-direction: column; gap: .5rem; margin-top: .75rem; }
 .flow-step {
   display: flex; gap: .85rem; align-items: flex-start;
   background: #0f1f38; border: 1px solid #1a2d46; border-radius: 10px;
@@ -56,7 +135,7 @@ tab-architecture iconify-icon { vertical-align: middle; flex-shrink: 0; }
 .step-title   { font-weight: 700; color: #e2e8f0; margin-bottom: .2rem; }
 .step-detail  { font-size: .73rem; color: #475569; line-height: 1.5; margin-top: .25rem; }
 .step-code {
-  font-family: 'Cascadia Code','Fira Code',monospace;
+  font-family: 'Fira Code','Cascadia Code',monospace;
   background: #060d1a; border-radius: 5px;
   padding: .25rem .5rem; margin-top: .35rem;
   font-size: .7rem; color: #60a5fa; display: block;

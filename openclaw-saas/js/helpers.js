@@ -23,15 +23,16 @@ export const PLATFORM_EMOJI = {
 
 /** Tab navigation config */
 export const TABS = [
-  { id: 'dashboard',    label: 'Bảng điều khiển', icon: 'layout-dashboard' },
-  { id: 'architecture', label: 'Kiến trúc SaaS',  icon: 'network'          },
-  { id: 'database',     label: 'DB & Auth',       icon: 'server-cog'       },
-  { id: 'storage',      label: 'Lưu trữ',         icon: 'database'         },
-  { id: 'compare',      label: 'So sánh',         icon: 'diff'             },
-  { id: 'docker101',    label: 'Docker 101',      icon: 'ship'             },
+  { id: 'dashboard',    label: 'Dashboard',    icon: 'layout-dashboard' },
+  { id: 'architecture', label: 'Kiến trúc',    icon: 'network'          },
+  { id: 'flows',        label: 'Luồng',        icon: 'git-branch'       },
+  { id: 'database',     label: 'DB & Auth',    icon: 'server-cog'       },
+  { id: 'storage',      label: 'Storage',      icon: 'database'         },
+  { id: 'compare',      label: 'So sánh',      icon: 'diff'             },
+  { id: 'docker101',    label: 'Docker 101',   icon: 'ship'             },
 ];
 
-/** Provisioning steps data — dùng trong tab-architecture */
+/** Provisioning steps data — dùng trong tab-architecture (Control Plane flow) */
 export const PROVISION_STEPS = [
   {
     n: 1, title: 'User mở browser',

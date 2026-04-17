@@ -2,22 +2,35 @@
 tab-database { display: block; }
 tab-database iconify-icon { vertical-align: middle; flex-shrink: 0; }
 
+/* ── ERD Section label ── */
+.erd-section-label {
+  font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em;
+  color: #475569; margin-bottom: .65rem;
+  display: flex; align-items: center; gap: .4rem;
+}
+
 /* ── ERD Diagram ── */
 .erd-container {
-  display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;
-  justify-content: center; align-items: flex-start;
+  display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;
+  justify-content: flex-start; align-items: flex-start;
 }
 
 .table-box {
   background: #0f1f38; border: 1px solid #1a2d46; border-radius: 12px;
-  width: 280px; overflow: hidden;
+  min-width: 220px; max-width: 280px; overflow: hidden; flex: 1;
 }
 
 .table-header {
-  background: #0d1a2e; padding: .65rem .85rem; font-weight: 700; font-size: .85rem;
+  padding: .6rem .85rem; font-weight: 700; font-size: .82rem;
   color: #f1f5f9; display: flex; align-items: center; gap: .5rem;
   border-bottom: 1px solid #1a2d46;
 }
+.table-header.core     { background: #0c1d40; border-left: 3px solid #3b82f6; }
+.table-header.auth     { background: #1e1040; border-left: 3px solid #7c3aed; }
+.table-header.project  { background: #052e16; border-left: 3px solid #16a34a; }
+.table-header.instance { background: #042026; border-left: 3px solid #0891b2; }
+.table-header.plan     { background: #1c1200; border-left: 3px solid #d97706; }
+.table-header.usage    { background: #1a0a2e; border-left: 3px solid #a855f7; }
 
 .table-row {
   display: flex; justify-content: space-between; padding: .5rem .85rem;

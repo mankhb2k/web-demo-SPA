@@ -13,6 +13,7 @@ import { uid, now, clamp, TABS } from '../helpers.js';
 /* Import tất cả tab components để đăng ký custom elements */
 import './tab-dashboard.js';
 import './tab-architecture.js';
+import './tab-flows.js';
 import './tab-database.js';
 import './tab-storage.js';
 import './tab-compare.js';
@@ -20,10 +21,12 @@ import './tab-docker101.js';
 
 class AppShell extends LitElement {
   static properties = {
-    _users:   { state: true },
-    _logs:    { state: true },
-    _tab:     { state: true },
-    _cmdUser: { state: true },
+    _users:      { state: true },
+    _logs:       { state: true },
+    _tab:        { state: true },
+    _cmdUser:    { state: true },
+    _cpuJitter:  { state: true },
+    _uptime:     { state: true },
   };
 
   createRenderRoot() { return this; }
@@ -31,10 +34,31 @@ class AppShell extends LitElement {
 
   constructor() {
     super();
-    this._users   = [];
-    this._logs    = [{ t: now(), msg: 'Docker Engine sẵn sàng. OpenClaw SaaS online.' }];
-    this._tab     = 'dashboard';
-    this._cmdUser = null;
+    this._users      = [];
+    this._logs       = [{ t: now(), msg: 'Docker Engine sẵn sàng. OpenClaw SaaS online.' }];
+    this._tab        = 'dashboard';
+    this._cmdUser    = null;
+    this._cpuJitter  = 2;
+    this._uptime     = 0;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Live CPU jitter every 2s
+    this._cpuInterval = setInterval(() => {
+      const base = this._totalCPU;
+      this._cpuJitter = base + (Math.random() * 2 - 1) * 1.5;
+    }, 2000);
+    // Uptime counter every second
+    this._uptimeInterval = setInterval(() => {
+      this._uptime++;
+    }, 1000);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    clearInterval(this._cpuInterval);
+    clearInterval(this._uptimeInterval);
   }
 
   /* ════════════════ State helpers ════════════════ */
@@ -152,7 +176,7 @@ class AppShell extends LitElement {
         <!-- ── Header ── -->
         <header class="header">
           <div class="logo-wrap">
-            <iconify-icon icon="lucide:box" style="font-size: 1.8rem; color: #38bdf8;"></iconify-icon>
+            <iconify-icon icon="lucide:box" style="font-size: 1.6rem; color: #38bdf8;"></iconify-icon>
             <div>
               <div class="logo-text">OpenClaw SaaS</div>
               <div class="logo-sub">Docker Interactive Guide</div>
@@ -165,7 +189,6 @@ class AppShell extends LitElement {
                 class="tab-btn ${this._tab === t.id ? 'active' : ''}"
                 @click=${() => { this._tab = t.id; }}
               >
-                <iconify-icon icon="lucide:${t.icon}" style="margin-right: .4rem; font-size: 1rem;"></iconify-icon>
                 ${t.label}
               </button>
             `)}
@@ -264,6 +287,10 @@ class AppShell extends LitElement {
 
             ${this._tab === 'architecture' ? html`
               <tab-architecture .users=${this._users}></tab-architecture>
+            ` : ''}
+
+            ${this._tab === 'flows' ? html`
+              <tab-flows></tab-flows>
             ` : ''}
 
             ${this._tab === 'database' ? html`

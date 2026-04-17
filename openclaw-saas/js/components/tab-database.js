@@ -11,9 +11,6 @@ class TabDatabase extends LitElement {
 
   createRenderRoot() { return this; }
 
-
-  createRenderRoot() { return this; }
-
   constructor() {
     super();
     this.users = [];
@@ -36,6 +33,10 @@ class TabDatabase extends LitElement {
           </div>
         </div>
 
+        <div class="erd-section-label">
+          <iconify-icon icon="lucide:shield" style="color:#60a5fa"></iconify-icon>
+          Auth Tables (Better-Auth)
+        </div>
         <div class="erd-container">
           <!-- User Table -->
           <div class="table-box">
@@ -52,7 +53,10 @@ class TabDatabase extends LitElement {
               <div class="col-name">password_hash</div><div class="col-type">TEXT (Null if OAuth)</div>
             </div>
             <div class="table-row">
-              <div class="col-name">tier</div><div class="col-type">ENUM ('Free', 'Pro')</div>
+              <div class="col-name"><span class="fk">🔗</span>plan_id</div><div class="col-type">UUID → plans</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">status</div><div class="col-type">ENUM ('active', 'banned')</div>
             </div>
             <div class="table-row">
               <div class="col-name">created_at</div><div class="col-type">TIMESTAMP</div>
@@ -96,8 +100,124 @@ class TabDatabase extends LitElement {
               <div class="col-name">ip_address</div><div class="col-type">INET</div>
             </div>
           </div>
-
         </div>
+
+        <div class="erd-section-label" style="margin-top:1rem">
+          <iconify-icon icon="lucide:server" style="color:#4ade80"></iconify-icon>
+          SaaS Core Tables (PostgreSQL)
+        </div>
+        <div class="erd-container">
+          <!-- Projects table -->
+          <div class="table-box">
+            <div class="table-header project">
+              <iconify-icon icon="lucide:folder"></iconify-icon> projects
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="pk">🔑</span>id</div><div class="col-type">UUID</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="fk">🔗</span>user_id</div><div class="col-type">UUID → users</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">name</div><div class="col-type">VARCHAR</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">status</div><div class="col-type">ENUM (creating, running, stopped, error)</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">container_id</div><div class="col-type">VARCHAR</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">port</div><div class="col-type">INTEGER</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">domain</div><div class="col-type">VARCHAR</div>
+            </div>
+          </div>
+
+          <!-- Instances table -->
+          <div class="table-box">
+            <div class="table-header instance">
+              <iconify-icon icon="lucide:box"></iconify-icon> instances
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="pk">🔑</span>id</div><div class="col-type">UUID</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="fk">🔗</span>project_id</div><div class="col-type">UUID → projects</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">container_id</div><div class="col-type">VARCHAR</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">cpu_limit</div><div class="col-type">DECIMAL (0.5)</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">ram_limit</div><div class="col-type">INTEGER (MB)</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">status</div><div class="col-type">ENUM (running, stopped, error)</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="fk">🔗</span>node_id</div><div class="col-type">UUID → nodes</div>
+            </div>
+          </div>
+
+          <!-- Plans table -->
+          <div class="table-box">
+            <div class="table-header plan">
+              <iconify-icon icon="lucide:gem"></iconify-icon> plans
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="pk">🔑</span>id</div><div class="col-type">UUID</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">name</div><div class="col-type">VARCHAR ('Free', 'Pro')</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">price</div><div class="col-type">DECIMAL</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">max_projects</div><div class="col-type">INTEGER</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">cpu_limit</div><div class="col-type">DECIMAL</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">ram_limit</div><div class="col-type">INTEGER</div>
+            </div>
+          </div>
+
+          <!-- Usage logs table -->
+          <div class="table-box">
+            <div class="table-header usage">
+              <iconify-icon icon="lucide:bar-chart-2"></iconify-icon> usage_logs
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="pk">🔑</span>id</div><div class="col-type">UUID</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="fk">🔗</span>user_id</div><div class="col-type">UUID → users</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name"><span class="fk">🔗</span>project_id</div><div class="col-type">UUID → projects</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">requests</div><div class="col-type">INTEGER</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">tokens_used</div><div class="col-type">INTEGER</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">cost</div><div class="col-type">DECIMAL</div>
+            </div>
+            <div class="table-row">
+              <div class="col-name">timestamp</div><div class="col-type">TIMESTAMP</div>
+            </div>
+          </div>
+        </div>
+
+
 
         <div class="section-title" style="font-size:.9rem; margin-top:2rem;">
           <iconify-icon icon="lucide:database" style="margin-right: .5rem; color: #4ade80;"></iconify-icon>
