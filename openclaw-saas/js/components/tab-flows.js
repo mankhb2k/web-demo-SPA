@@ -85,7 +85,7 @@ class TabFlows extends LitElement {
     const flow = FLOWS.find(f => f.id === this._active);
 
     return html`
-      <div class="anim-slide">
+      <div>
         <div class="section-title">
           <iconify-icon icon="lucide:git-branch" style="margin-right:.5rem;color:#a78bfa"></iconify-icon>
           Luồng Hoạt Động Hệ Thống
