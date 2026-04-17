@@ -5,16 +5,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>OpenClaw SaaS — Modern Docker Strategy</title>
     
-    <!-- OpenClaw CSS Links (Prepended with openclaw-saas/) -->
+    <!-- Landing Page CSS -->
     <link rel="stylesheet" href="openclaw-saas/css/base.css" />
     <link rel="stylesheet" href="openclaw-saas/css/components.css" />
-    <link rel="stylesheet" href="openclaw-saas/css/app-shell.css" />
-    <link rel="stylesheet" href="openclaw-saas/css/tab-dashboard.css" />
-    <link rel="stylesheet" href="openclaw-saas/css/tab-architecture.css" />
-    <link rel="stylesheet" href="openclaw-saas/css/tab-database.css" />
-    <link rel="stylesheet" href="openclaw-saas/css/tab-storage.css" />
-    <link rel="stylesheet" href="openclaw-saas/css/tab-compare.css" />
-    <link rel="stylesheet" href="openclaw-saas/css/tab-docker101.css" />
 
     <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
@@ -146,10 +139,10 @@
                 Quản lý hàng ngàn container với hiệu năng và bảo mật tối ưu.
             </p>
             
-            <button id="launch-trigger" class="launch-btn">
+            <a href="openclaw-saas/openclaw-saas.html" class="launch-btn">
                 Mở Dashboard Quản Trị
                 <iconify-icon icon="lucide:arrow-right" style="font-size:1.2rem"></iconify-icon>
-            </button>
+            </a>
 
             <div class="feature-dots">
                 <div class="dot-item"><iconify-icon icon="lucide:shield-check" style="color:#fafafa"></iconify-icon> Isolation</div>
@@ -159,35 +152,8 @@
         </div>
     </div>
 
-    <!-- App Shell (Initially Hidden) -->
-    <div id="app-root">
-        <app-shell></app-shell>
-    </div>
 
-    <!-- JS Logic -->
-    <script type="module">
-        import './openclaw-saas/js/components/app-shell.js';
 
-        const launchBtn = document.getElementById('launch-trigger');
-        const landingPage = document.getElementById('landing-page');
-        const appRoot = document.getElementById('app-root');
-
-        launchBtn.addEventListener('click', () => {
-            // Fade out effect
-            landingPage.style.opacity = '0';
-            setTimeout(() => {
-                landingPage.classList.add('hidden');
-                appRoot.style.display = 'block';
-                // Trigger any resize or update needed for the app
-                window.dispatchEvent(new Event('resize'));
-            }, 500);
-        });
-
-        // Check if URL hash is #dashboard to skip landing
-        if (window.location.hash === '#dashboard') {
-            landingPage.classList.add('hidden');
-            appRoot.style.display = 'block';
-        }
-    </script>
+    <!-- No JS needed for the landing page link -->
 </body>
 </html>

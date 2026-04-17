@@ -85,6 +85,46 @@ class TabFlows extends LitElement {
     const flow = FLOWS.find(f => f.id === this._active);
 
     return html`
+      <style>
+        /* Inlined CSS for reliability on local servers */
+        .flow-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .flow-tab-btn {
+          padding: .45rem .9rem; border-radius: 8px; border: 1px solid #1a2d46;
+          background: transparent; color: #94a3b8; font-size: .78rem; font-weight: 600;
+          cursor: pointer; transition: all .18s; font-family: inherit;
+          display: inline-flex; align-items: center; gap: .35rem;
+        }
+        .flow-tab-btn:hover { background: #0f1f38; color: #fff; }
+        .flow-tab-btn.active { background: #0f1f38; border-color: currentColor; }
+        
+        .plane-legend { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .legend-item { font-size: .72rem; color: #64748b; display: flex; align-items: center; gap: .35rem; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        .flow-diagram { display: flex; flex-direction: column; gap: 0; }
+        .flow-step-row { display: flex; flex-direction: column; align-items: flex-start; }
+        .step-index { font-size: .65rem; font-weight: 800; font-family: monospace; margin-bottom: .35rem; padding-left: .25rem; }
+        .flow-step-card {
+          border: 1px solid; border-radius: 10px; padding: .65rem 1rem; width: 100%;
+          display: flex; align-items: center; gap: .75rem; transition: filter .15s;
+        }
+        .flow-step-text { flex: 1; font-size: .83rem; font-weight: 500; color: #e2e8f0; }
+        .flow-plane-tag { border: 1px solid; border-radius: 5px; padding: .1rem .45rem; font-size: .6rem; font-weight: 700; text-transform: uppercase; }
+        .flow-connector { width: 2px; height: 18px; border-left: 2px dashed #1e3a5f; margin-left: 1.5rem; }
+
+        .mechanisms-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: .75rem; margin-top: .75rem; }
+        .mech-card { background: #0f1f38; border: 1px solid #1a2d46; border-radius: 10px; padding: .85rem 1rem; display: flex; gap: .75rem; }
+        .mech-title { font-size: .85rem; font-weight: 700; color: #f1f5f9; margin-bottom: .2rem; }
+        .mech-body { font-size: .75rem; color: #94a3b8; font-family: monospace; }
+        .mech-note { font-size: .68rem; color: #475569; margin-top: .25rem; }
+
+        .cost-summary { margin-top: 1.5rem; background: #0f1f38; border: 1px solid #1a2d46; border-radius: 12px; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: .6rem; }
+        .cost-item { display: flex; align-items: center; gap: .6rem; font-size: .83rem; color: #94a3b8; }
+        .cost-item strong { margin-left: auto; }
+        .cost-item.cost-total { border-top: 1px solid #1a2d46; padding-top: .6rem; color: #e2e8f0; font-weight: 600; }
+        .cost-divider { text-align: center; font-size: 1rem; color: #1e3a5f; font-weight: 800; padding-left: 1.7rem; }
+      </style>
+
       <div>
         <div class="section-title">
           <iconify-icon icon="lucide:git-branch" style="margin-right:.5rem;color:#a78bfa"></iconify-icon>
